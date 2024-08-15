@@ -1,13 +1,9 @@
--- Verifica se o banco de dados existe
 \c zupit_db
 
 CREATE TYPE gender AS ENUM ('MAN', 'WOMAN');
 
-CREATE TABLE IF NOT EXISTS xpto(
-    id SERIAL PRIMARY KEY
-);
 -- Criação da tabela 'users'
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -52,8 +48,8 @@ BEGIN
         p_password,
         p_birthday,
         p_sex,
-        NULL,  -- Ajuste o valor para 'icon' se necessário
-        TRUE  -- Valor padrão para 'user_status'
+        NULL,
+        TRUE
     )
     RETURNING id INTO v_user_id;
     RETURN v_user_id;

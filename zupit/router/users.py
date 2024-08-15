@@ -1,50 +1,58 @@
 from http import HTTPStatus
-from typing import Union
 
 from fastapi import APIRouter, HTTPException
 
 from zupit.database import Connection
-from zupit.schemas import Brazilian, Foreigner, User
+from zupit.schemas import Brazilian, User, UserPublic
 
 router = APIRouter(prefix='/users', tags=['users'])
 
 
 @router.post(
     '/',
-    response_model=Union[Brazilian, Foreigner],
+    response_model=UserPublic,
     status_code=HTTPStatus.CREATED,
 )
 def create_user(user: User, conn: Connection):
     user_db = None
-    if user.nationality == 'BRAZILIAN':
+    breakpoint()
+    if user.nationality.value == 'BRAZILIAN':
         try:
-            sql = """
-            CALL create_brazilian(
-                :name,
-                :email,
-                :password,
-                :birthday,
-                :sex,
-                :cpf
-            );
-            """
-            result = conn.execute(
+            sql = 'CALL create_brazilian(%s, %s, %s, %s, %s, %s);'
+            cursor = conn.cursor()
+            cursor.execute(
                 sql,
-                {
-                    'name': user.name,
-                    'emai': user.email,
-                    'password': user.password,
-                    'birthday': user.birthday,
-                    'sex': user.sex,
-                    'cpf': user.cpf,
-                },
+                (
+                    user.name,
+                    user.email,
+                    user.password,
+                    user.birthday,
+                    user.sex,
+                    user.cpf,
+                ),
             )
-            user_db = result.fetchone()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            user_db = cursor.fetchone()
+            print(user_db)
+
+            if user_db is None:
+                raise HTTPException(
+                    status_code=404, detail='User not created.'
+                )
+
+            return Brazilian(
+                id=user_db[0],
+                name=user_db[1],
+                email=user_db[2],
+                birthday=user_db[3],
+                sex=user_db[4],
+                cpf=user_db[5],
+            )
+        except Exception:
+            raise HTTPException(status_code=500, detail='errei aqui')
         finally:
-            return user_db
-    else: 
+            cursor.close()
+    else:
         raise HTTPException(
-            status_code=402, detail=f'outra coisa {user.nationality}'
+            status_code=402,
+            detail=f'Unsupported nationality: {user.nationality}',
         )

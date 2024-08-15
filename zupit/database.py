@@ -4,15 +4,19 @@ from fastapi import Depends
 from psycopg import Connection, connect
 
 
-def get_db_conn() -> Connection:
+def get_db_conn():
     conn = connect(
         dbname='zupit_db',
-        user='root',
-        password='root',
-        host='localhost',
+        user='postgres',
+        password='postgres',
+        host='zupit_database',
         port='5432',
         autocommit=True,
     )
-    return conn
+    try:
+        yield conn
+    finally:
+        conn.close()
+
 
 Connection = Annotated[Connection, Depends(get_db_conn)]

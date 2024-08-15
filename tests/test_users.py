@@ -6,7 +6,7 @@ def test_create_brazilian(client):
         'name': 'antonio',
         'email': 'antonio@example.com',
         'sex': 'MAN',
-        'nacionality': 'FOREIGNER',
+        'nacionality': 'BRAZILIAN',
         'cpf': '25510057244',
     }
     payload = {**esperado, 'password': '123'}

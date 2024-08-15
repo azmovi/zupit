@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
@@ -26,6 +26,7 @@ class User(BaseModel):
 
 
 class Brazilian(BaseModel):
+    id: int
     name: str
     email: str
     birthday: str
@@ -34,8 +35,12 @@ class Brazilian(BaseModel):
 
 
 class Foreigner(BaseModel):
+    id: int
     name: str
     email: str
     birthday: str
     sex: Gender
     rnm: str
+
+
+UserPublic = Union[Brazilian, Foreigner]
