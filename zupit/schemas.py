@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 from typing import Optional, Union
 
@@ -18,7 +19,7 @@ class User(BaseModel):
     name: str
     email: str
     password: str
-    birthday: str
+    birthday: date
     sex: Gender
     nationality: Nacionality
     cpf: Optional[str] = None
@@ -29,7 +30,7 @@ class Brazilian(BaseModel):
     id: int
     name: str
     email: str
-    birthday: str
+    birthday: date
     sex: Gender
     cpf: str
 
@@ -38,7 +39,7 @@ class Foreigner(BaseModel):
     id: int
     name: str
     email: str
-    birthday: str
+    birthday: date
     sex: Gender
     rnm: str
 

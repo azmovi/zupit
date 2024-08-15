@@ -14,25 +14,34 @@ router = APIRouter(prefix='/users', tags=['users'])
     status_code=HTTPStatus.CREATED,
 )
 def create_user(user: User, conn: Connection):
-    user_db = None
-    breakpoint()
     if user.nationality.value == 'BRAZILIAN':
+        sql = """
+            CALL create_brazilian(%s, %s, %s, %s, %s, %s);
+        """
         try:
-            sql = 'CALL create_brazilian(%s, %s, %s, %s, %s, %s);'
-            cursor = conn.cursor()
-            cursor.execute(
-                sql,
-                (
-                    user.name,
-                    user.email,
-                    user.password,
-                    user.birthday,
-                    user.sex,
-                    user.cpf,
-                ),
-            )
-            user_db = cursor.fetchone()
-            print(user_db)
+            with conn.cursor() as cur:
+                cur.execute(
+                    sql,
+                    (
+                        user.name,
+                        user.email,
+                        user.password,
+                        user.birthday,
+                        user.sex.value,
+                        user.cpf,
+                    ),
+                )
+                conn.commit()  # Commit da transação
+
+            # Busca o usuário diretamente da tabela 'users'
+            with conn.cursor() as cur:
+                sql = """
+                    SELECT u.id, u.name, u.email, u.birthday, u.sex, b.cpf
+                    FROM users u JOIN brazilians b ON u.id = b.user_id
+                    WHERE u.email = %s;
+                """
+                cur.execute(sql, (user.email,))
+                user_db = cur.fetchone()
 
             if user_db is None:
                 raise HTTPException(
@@ -47,10 +56,8 @@ def create_user(user: User, conn: Connection):
                 sex=user_db[4],
                 cpf=user_db[5],
             )
-        except Exception:
-            raise HTTPException(status_code=500, detail='errei aqui')
-        finally:
-            cursor.close()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
     else:
         raise HTTPException(
             status_code=402,

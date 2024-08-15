@@ -5,11 +5,11 @@ def test_create_brazilian(client):
     esperado = {
         'name': 'antonio',
         'email': 'antonio@example.com',
+        'birthday': '2000-01-01',
         'sex': 'MAN',
-        'nacionality': 'BRAZILIAN',
-        'cpf': '25510057244',
+        'cpf': '12345678900',
     }
-    payload = {**esperado, 'password': '123'}
+    payload = {**esperado, 'password': '123', 'nationality': 'BRAZILIAN'}
 
     response = client.post('/users', json=payload)
 

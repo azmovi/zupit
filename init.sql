@@ -1,9 +1,10 @@
 \c zupit_db
 
+-- Criação do tipo ENUM 'gender'
 CREATE TYPE gender AS ENUM ('MAN', 'WOMAN');
 
 -- Criação da tabela 'users'
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -15,14 +16,14 @@ CREATE TABLE users (
 );
 
 -- Criação da tabela 'brazilians'
-CREATE TABLE brazilians (
+CREATE TABLE IF NOT EXISTS brazilians (
     cpf VARCHAR(11) PRIMARY KEY,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Criação da tabela 'foreigners'
-CREATE TABLE foreigners (
+CREATE TABLE IF NOT EXISTS foreigners (
     rnm VARCHAR(8) PRIMARY KEY,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE

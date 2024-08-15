@@ -25,7 +25,7 @@ def connection():
         cursor = conn.cursor()
         init(cursor, 'init.sql')
 
-        yield cursor
+        yield conn
 
         conn.rollback()
         cursor.close()
