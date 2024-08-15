@@ -15,5 +15,4 @@ def get_db_conn() -> Connection:
     )
     return conn
 
-
 Connection = Annotated[Connection, Depends(get_db_conn)]

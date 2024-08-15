@@ -16,3 +16,8 @@ app.include_router(users.router)
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse('index.html', {'request': request})
+
+
+@app.get('/form', response_class=HTMLResponse)
+def form(request: Request):
+    return templates.TemplateResponse('form.html', {'request': request})

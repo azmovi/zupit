@@ -1,12 +1,11 @@
 def test_user_insertion(connection):
-    conn, cursor = connection
+    _, cursor = connection
     cursor.execute("""
         INSERT INTO users (username, email, password) VALUES(
         'test_user',
         'test_user@dominio.com',
         'test_password');"""
     )
-    conn.commit()
     cursor.execute(
         "SELECT * FROM users WHERE username = 'test_user'"
     )

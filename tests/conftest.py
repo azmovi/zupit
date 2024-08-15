@@ -1,6 +1,10 @@
 import pytest
+from fastapi.testclient import TestClient
 from psycopg import connect
 from testcontainers.postgres import PostgresContainer
+
+from zupit.app import app
+from zupit.database import get_db_conn
 
 
 @pytest.fixture
@@ -15,12 +19,13 @@ def connection():
             password='test',
             host='localhost',
             port=port,
+            autocommit=True,
         )
 
         cursor = conn.cursor()
         init(cursor, 'init.sql')
 
-        yield conn, cursor
+        yield cursor
 
         conn.rollback()
         cursor.close()
@@ -32,3 +37,15 @@ def init(cursor, file_path):
         sql_script = file.read()
         cursor.execute(sql_script)
         cursor.connection.commit()
+
+
+@pytest.fixture
+def client(connection):
+    def get_connection_override():
+        return connection
+
+    with TestClient(app) as client:
+        app.dependency_overrides[get_db_conn] = get_connection_override
+        yield client
+
+    app.dependency_overrides.clear()
