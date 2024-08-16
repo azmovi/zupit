@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from fastapi.testclient import TestClient
 from psycopg import connect
@@ -5,6 +7,8 @@ from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
 from zupit.database import get_db_conn
+from zupit.schemas import Brazilian, Gender, Nationality, User
+from zupit.service.users_crud import create_brazilian
 
 
 @pytest.fixture
@@ -49,3 +53,18 @@ def client(connection):
         yield client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def user(connection) -> Brazilian:
+    user = User(
+        name='antonio',
+        email='antonio@example.com',
+        password='123',
+        birthday=date(2002, 7, 8),
+        sex=Gender('MAN'),
+        cpf='12345678900',
+        nationality=Nationality('BRAZILIAN'),
+    )
+    user = create_brazilian(user, connection)
+    return user
