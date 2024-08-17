@@ -1,23 +1,39 @@
 from http import HTTPStatus
+from typing import Optional, Union
 
 from fastapi import HTTPException
 
 from zupit.database import Connection
-from zupit.schemas import Brazilian, Foreigner, Gender, User
+from zupit.schemas import (
+    Brazilian,
+    Foreigner,
+    Gender,
+    Public,
+    User,
+    UserPublic,
+)
 
 
-def get_user_by_email(email: str, conn: Connection) -> int | None:
-    sql = 'SELECT * FROM get_user_by_email(%s);'
-    id_user = None
+def get_user(campo: Union[str, int], conn) -> Optional[UserPublic]:
+    if isinstance(campo, int):
+        sql = 'SELECT * FROM get_user_by_id(%s);'
+    elif isinstance(campo, str):
+        sql = 'SELECT * FROM get_user_by_email(%s);'
 
     with conn.cursor() as cur:
-        cur.execute(sql, (email,))
-        result = cur.fetchone()
+        cur.execute(sql, (campo,))
+        user_db = cur.fetchone()
 
-        if result:
-            id_user = result[0]
-
-    return id_user
+    if user_db:
+        return Public(
+            id=user_db[0],
+            name=user_db[1],
+            email=user_db[2],
+            birthday=user_db[3],
+            sex=Gender(user_db[4]),
+            doc=user_db[5],
+        )
+    return None
 
 
 def create_brazilian(user: User, conn: Connection):
@@ -37,7 +53,7 @@ def create_brazilian(user: User, conn: Connection):
             )
             user_db = cur.fetchone()
         except Exception:
-            raise HTTPException(status_code=400, detail='Input invalido')
+            raise HTTPException(status_code=400, detail='Input invalid')
 
     return Brazilian(
         id=user_db[0],
@@ -67,7 +83,7 @@ def create_foreigner(user: User, conn: Connection):
             user_db = cur.fetchone()
         except Exception:
             raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST, detail='Input invalido'
+                status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
             )
 
     return Foreigner(

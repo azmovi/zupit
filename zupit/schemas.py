@@ -2,6 +2,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional, Union
 
+from fastapi import Form
 from pydantic import BaseModel, EmailStr
 
 
@@ -25,6 +26,29 @@ class User(BaseModel):
     cpf: Optional[str] = None
     rnm: Optional[str] = None
 
+    @classmethod
+    def as_form(
+        cls,
+        name: str = Form(),
+        email: str = Form(),
+        password: str = Form(),
+        birthday: str = Form(),
+        sex: str = Form(),
+        nationality: str = Form(),
+        cpf: Optional[str] = Form(None),
+        rnm: Optional[str] = Form(None),
+    ):
+        return cls(
+            name=name,
+            email=email,
+            password=password,
+            birthday=date.fromisoformat(birthday),
+            sex=Gender(sex),
+            nationality=Nationality(nationality),
+            cpf=cpf,
+            rnm=rnm,
+        )
+
 
 class Public(BaseModel):
     id: int
@@ -32,6 +56,7 @@ class Public(BaseModel):
     email: EmailStr
     birthday: date
     sex: Gender
+    doc: str
 
 
 class Brazilian(BaseModel):

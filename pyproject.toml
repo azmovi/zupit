@@ -13,6 +13,9 @@ fastapi = {extras = ["standard"], version = "^0.112.0"}
 pydantic-settings = "^2.4.0"
 httpx = "^0.27.0"
 email-validator = "^2.2.0"
+python-multipart = "^0.0.9"
+starlette = "^0.38.2"
+itsdangerous = "^2.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -27,9 +30,11 @@ testcontainers = "^4.8.0"
 line-length = 79
 extend-exclude = ['migrations']
 
+
 [tool.ruff.lint]
 preview = true
 select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+ignore = ["PLR0913",  "PLR0917", ]
 
 [tool.ruff.format]
 preview = true

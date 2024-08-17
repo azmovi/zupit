@@ -27,6 +27,20 @@ $ poetry shell
 - Esse ultimo passo deve ser todas as vezes que você for colaborar no código, o
 restante apenas é na primeira vez estiver usando.
 
+##### Atalhos de desenvolvimento
+- Para a formatação do codigo é so escrever:
+```
+$ task format
+```
+- Para testar o codigo é so escrever:
+```
+$ task test
+```
+- Para rodar o servidor basta escrever:
+```
+$ task run
+```
+
 ### Subindo a aplicação.
 - Para mitigar problemas envolvendo configurações específicas de computador,
 optamos por utilizar o `docker` para fazer a conteinerização da aplicação e do

@@ -1,9 +1,15 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
+import json
+from http import HTTPStatus
+
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 
+from zupit.database import Connection
 from zupit.router import users
+from zupit.router.users import create_user
 from zupit.schemas import User
 
 app = FastAPI()
@@ -11,31 +17,47 @@ app = FastAPI()
 app.mount('/static', StaticFiles(directory='zupit/static'), name='static')
 templates = Jinja2Templates(directory='zupit/templates')
 
+app.add_middleware(SessionMiddleware, secret_key='secret_key')
+
 app.include_router(users.router)
 
 
 @app.get('/', response_class=HTMLResponse)
 def home(request: Request):
-    user = request.session.get('user')
+    user = None
+    try:
+        user_json = request.session.get('user')
+        if user_json:
+            user = json.loads(user_json)
+    except Exception:
+        user = None
+
     return templates.TemplateResponse(
-        'index.html',
-        {'request': request, 'user': user}
+        request=request, name='index.html', context={'user': user}
     )
+
 
 @app.get('/form', response_class=HTMLResponse)
 def form(request: Request):
     return templates.TemplateResponse('form.html', {'request': request})
 
+
 @app.post('/submit', response_class=HTMLResponse)
 def form_user(
     request: Request,
-    name: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    birthday: str = Form(...),
-    sex: str = Form(...),
-    nationality: str = Form(...),
-    cpf: str = Form(None),
-    rnm: str = Form(None),
+    conn: Connection,
+    user_form: User = Depends(User.as_form),
 ):
-    return templates.TemplateResponse('form.html', {'request': request})
+    user_db = create_user(user_form, conn)
+    user_serialize = dict(user_db)
+    user_serialize['birthday'] = user_db.birthday.isoformat()
+    user_serialize['sex'] = user_db.sex.value
+    request.session['user'] = json.dumps(user_serialize)
+
+    return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)
+
+
+@app.get('/logoff', response_class=HTMLResponse)
+def logoff(request: Request):
+    request.session.clear()
+    return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)

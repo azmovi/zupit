@@ -2,6 +2,15 @@
 
 CREATE TYPE gender AS ENUM ('MAN', 'WOMAN');
 
+CREATE TYPE user_public AS (
+    user_id INTEGER,
+    user_name VARCHAR,
+    user_email VARCHAR,
+    user_birthday DATE,
+    user_sex gender,
+    user_doc VARCHAR
+);
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -25,29 +34,13 @@ CREATE TABLE foreigners (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE FUNCTION get_user_by_email(p_email VARCHAR)
-RETURNS INTEGER
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_user_id INTEGER;
-BEGIN
-    SELECT u.id INTO v_user_id
-    FROM users u
-    WHERE u.email = p_email
-    LIMIT 1;
-
-    RETURN v_user_id;
-END;
-$$;
-
 CREATE FUNCTION create_user(
     p_name VARCHAR,
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
     p_sex gender
-) RETURNS INTEGER 
+) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -64,8 +57,7 @@ $$;
 CREATE FUNCTION _create_brazilian(
     p_cpf VARCHAR,
     p_id_user INTEGER
-)
-RETURNS VOID
+) RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -81,15 +73,7 @@ CREATE FUNCTION create_brazilian(
     p_birthday DATE,
     p_sex gender,
     p_cpf VARCHAR
-)
-RETURNS TABLE (
-    user_id INTEGER,
-    user_name VARCHAR,
-    user_email VARCHAR,
-    user_birthday DATE,
-    user_sex gender,
-    brazilian_cpf VARCHAR
-)
+) RETURNS SETOF user_public
 LANGUAGE plpgsql
 AS $$
 DECLARE 
@@ -98,20 +82,15 @@ BEGIN
     v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
     PERFORM _create_brazilian(p_cpf, v_user_id);
 
-    RETURN QUERY
-    SELECT u.id, u.name, u.email, u.birthday, u.sex, b.cpf
-    FROM users u
-    JOIN brazilians b ON u.id = b.user_id
-    WHERE u.id = v_user_id
-    LIMIT 1;
+    RETURN QUERY 
+    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, p_cpf;
 END;
 $$;
 
 CREATE FUNCTION _create_foreigner(
     p_rnm VARCHAR,
     p_id_user INTEGER
-)
-RETURNS VOID
+) RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -127,15 +106,7 @@ CREATE FUNCTION create_foreigner(
     p_birthday DATE,
     p_sex gender,
     p_rnm VARCHAR
-)
-RETURNS TABLE (
-    user_id INTEGER,
-    user_name VARCHAR,
-    user_email VARCHAR,
-    user_birthday DATE,
-    user_sex gender,
-    foreigner_rnm VARCHAR
-)
+) RETURNS SETOF user_public
 LANGUAGE plpgsql
 AS $$
 DECLARE 
@@ -153,3 +124,61 @@ BEGIN
 END;
 $$;
 
+CREATE FUNCTION get_user_doc(p_id INTEGER)
+RETURNS VARCHAR
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    doc VARCHAR;
+BEGIN
+    SELECT b.cpf INTO doc
+    FROM brazilians b
+    WHERE b.user_id = p_id
+    LIMIT 1;
+
+    IF doc IS NULL THEN
+        SELECT f.rnm INTO doc
+        FROM foreigners f
+        WHERE f.user_id = p_id
+        LIMIT 1;
+    END IF;
+
+    RETURN doc;
+END;
+$$;
+
+CREATE FUNCTION get_user_by_id(p_id INTEGER)
+RETURNS SETOF user_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id,
+           u.name,
+           u.email,
+           u.birthday,
+           u.sex,
+           get_user_doc(u.id)
+    FROM users u
+    WHERE u.id = p_id
+    LIMIT 1;
+END;
+$$;
+
+CREATE FUNCTION get_user_by_email(p_email VARCHAR)
+RETURNS SETOF user_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id,
+           u.name,
+           u.email,
+           u.birthday,
+           u.sex,
+           get_user_doc(u.id)
+    FROM users u
+    WHERE u.email = p_email
+    LIMIT 1;
+END;
+$$;
