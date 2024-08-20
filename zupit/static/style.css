@@ -20,7 +20,9 @@ section {
 form {
     width: 100%;
 }
-
+.padding {
+    padding: 30px;
+}
 .container-gap {
     display: flex;
     flex-direction: column;
@@ -70,8 +72,28 @@ form {
     background-color: #667ae9;
 }
 
+.button3 {
+    background-color: #445BE6; 
+    border: none;
+    color: white;
+    padding: 15px 0px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    width: 100%;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+.button3:hover {
+    background-color: #667ae9;
+}
+
+
 
 input[type="text"],
+input[type="email"],
+input[type="password"],
 input[type="time"],
 input[type="date"] {
     width: 100%; /* Faz o campo de entrada ocupar toda a largura disponível */
