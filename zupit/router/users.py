@@ -3,11 +3,11 @@ from http import HTTPStatus
 from fastapi import APIRouter, HTTPException
 
 from zupit.database import Connection
-from zupit.schemas import User, UserPublic
+from zupit.schemas import User, UserCredentials, UserPublic
 from zupit.service.users_crud import (
-    create_brazilian,
-    create_foreigner,
-    get_user,
+    confirm_user_db,
+    create_user_db,
+    get_user_db,
 )
 
 router = APIRouter(prefix='/users', tags=['users'])
@@ -19,19 +19,23 @@ router = APIRouter(prefix='/users', tags=['users'])
     status_code=HTTPStatus.CREATED,
 )
 def create_user(user: User, conn: Connection):
-    db_user = get_user(user.email, conn)
+    db_user = get_user_db(user.email, conn)
 
     if db_user:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='User already in database',
         )
+    db_user = create_user_db(user, conn)
+    return db_user
 
-    if user.nationality.value == 'BRAZILIAN':
-        db_user = create_brazilian(user, conn)
-    else:
-        db_user = create_foreigner(user, conn)
 
+@router.post(
+    '/confirm',
+    response_model=UserPublic,
+)
+def confirm_user(user: UserCredentials, conn: Connection):
+    db_user = confirm_user_db(user, conn)
     return db_user
 
 
@@ -39,8 +43,8 @@ def create_user(user: User, conn: Connection):
     '/{user_id}',
     response_model=UserPublic,
 )
-def read_user(user_id: int, conn: Connection):
-    db_user = get_user(user_id, conn)
+def get_user(user_id: int, conn: Connection):
+    db_user = get_user_db(user_id, conn)
 
     if db_user is None:
         raise HTTPException(

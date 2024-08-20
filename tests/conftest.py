@@ -7,8 +7,8 @@ from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
 from zupit.database import get_db_conn
-from zupit.schemas import Brazilian, Gender, Nationality, User
-from zupit.service.users_crud import create_brazilian
+from zupit.router.users import create_user
+from zupit.schemas import Gender, Nationality, Public, User
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ def client(connection):
 
 
 @pytest.fixture
-def user(connection) -> Brazilian:
+def user(connection) -> Public:
     user = User(
         name='antonio',
         email='antonio@example.com',
@@ -66,5 +66,5 @@ def user(connection) -> Brazilian:
         cpf='12345678900',
         nationality=Nationality('BRAZILIAN'),
     )
-    user = create_brazilian(user, connection)
+    user = create_user(user, connection)
     return user

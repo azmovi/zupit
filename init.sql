@@ -8,6 +8,7 @@ CREATE TYPE user_public AS (
     user_email VARCHAR,
     user_birthday DATE,
     user_sex gender,
+    user_icon BYTEA,
     user_doc VARCHAR
 );
 
@@ -83,7 +84,7 @@ BEGIN
     PERFORM _create_brazilian(p_cpf, v_user_id);
 
     RETURN QUERY 
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, p_cpf;
+    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_cpf;
 END;
 $$;
 
@@ -116,11 +117,7 @@ BEGIN
     PERFORM _create_foreigner(p_rnm, v_user_id);
 
     RETURN QUERY
-    SELECT u.id, u.name, u.email, u.birthday, u.sex, f.rnm
-    FROM users u
-    JOIN foreigners f ON u.id = f.user_id
-    WHERE u.id = v_user_id
-    LIMIT 1;
+    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_rnm;
 END;
 $$;
 
@@ -158,6 +155,7 @@ BEGIN
            u.email,
            u.birthday,
            u.sex,
+           u.icon,
            get_user_doc(u.id)
     FROM users u
     WHERE u.id = p_id
@@ -176,9 +174,37 @@ BEGIN
            u.email,
            u.birthday,
            u.sex,
+           u.icon,
            get_user_doc(u.id)
     FROM users u
     WHERE u.email = p_email
     LIMIT 1;
 END;
 $$;
+
+CREATE FUNCTION confirm_user(
+    p_email VARCHAR,
+    p_password VARCHAR
+) RETURNS SETOF user_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id,
+           u.name,
+           u.email,
+           u.birthday,
+           u.sex,
+           u.icon,
+           get_user_doc(u.id)
+    FROM users u
+    WHERE u.email = p_email
+    AND u.password = p_password
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'User not found';
+    END IF;
+END;
+$$;
+

@@ -5,16 +5,15 @@ from fastapi import HTTPException
 
 from zupit.database import Connection
 from zupit.schemas import (
-    Brazilian,
-    Foreigner,
     Gender,
     Public,
     User,
+    UserCredentials,
     UserPublic,
 )
 
 
-def get_user(campo: Union[str, int], conn) -> Optional[UserPublic]:
+def get_user_db(campo: Union[str, int], conn) -> Optional[UserPublic]:
     if isinstance(campo, int):
         sql = 'SELECT * FROM get_user_by_id(%s);'
     elif isinstance(campo, str):
@@ -31,13 +30,20 @@ def get_user(campo: Union[str, int], conn) -> Optional[UserPublic]:
             email=user_db[2],
             birthday=user_db[3],
             sex=Gender(user_db[4]),
-            doc=user_db[5],
+            icon=user_db[5],
+            doc=user_db[6],
         )
     return None
 
 
-def create_brazilian(user: User, conn: Connection):
-    sql = 'SELECT * FROM create_brazilian(%s, %s, %s, %s, %s, %s);'
+def create_user_db(user: User, conn: Connection):
+    if user.nationality.value == 'BRAZILIAN':
+        sql = 'SELECT * FROM create_brazilian(%s, %s, %s, %s, %s, %s);'
+        doc = user.cpf
+    else:
+        sql = 'SELECT * FROM create_foreigner(%s, %s, %s, %s, %s, %s);'
+        doc = user.rnm
+
     with conn.cursor() as cur:
         try:
             cur.execute(
@@ -48,36 +54,7 @@ def create_brazilian(user: User, conn: Connection):
                     user.password,
                     user.birthday,
                     user.sex.value,
-                    user.cpf,
-                ),
-            )
-            user_db = cur.fetchone()
-        except Exception:
-            raise HTTPException(status_code=400, detail='Input invalid')
-
-    return Brazilian(
-        id=user_db[0],
-        name=user_db[1],
-        email=user_db[2],
-        birthday=user_db[3],
-        sex=Gender(user_db[4]),
-        cpf=user_db[5],
-    )
-
-
-def create_foreigner(user: User, conn: Connection):
-    sql = 'SELECT * FROM create_foreigner(%s, %s, %s, %s, %s, %s);'
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                sql,
-                (
-                    user.name,
-                    user.email,
-                    user.password,
-                    user.birthday,
-                    user.sex.value,
-                    user.rnm,
+                    doc,
                 ),
             )
             user_db = cur.fetchone()
@@ -85,12 +62,33 @@ def create_foreigner(user: User, conn: Connection):
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
             )
-
-    return Foreigner(
+    return Public(
         id=user_db[0],
         name=user_db[1],
         email=user_db[2],
         birthday=user_db[3],
         sex=Gender(user_db[4]),
-        rnm=user_db[5],
+        icon=user_db[5],
+        doc=user_db[6],
+    )
+
+
+def confirm_user_db(user: UserCredentials, conn: Connection):
+    sql = 'SELECT * FROM confirm_user(%s, %s)'
+    with conn.cursor() as cur:
+        try:
+            cur.execute(sql, (user.email, user.password))
+            user_db = cur.fetchone()
+        except Exception:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            )
+    return Public(
+        id=user_db[0],
+        name=user_db[1],
+        email=user_db[2],
+        birthday=user_db[3],
+        sex=Gender(user_db[4]),
+        icon=user_db[5],
+        doc=user_db[6],
     )

@@ -56,6 +56,7 @@ class Public(BaseModel):
     email: EmailStr
     birthday: date
     sex: Gender
+    icon: Optional[bytes]
     doc: str
 
 
@@ -65,6 +66,7 @@ class Brazilian(BaseModel):
     email: EmailStr
     birthday: date
     sex: Gender
+    icon: Optional[bytes] = None
     cpf: str
 
 
@@ -74,7 +76,24 @@ class Foreigner(BaseModel):
     email: EmailStr
     birthday: date
     sex: Gender
+    icon: Optional[bytes] = None
     rnm: str
 
 
 UserPublic = Union[Brazilian, Foreigner, Public]
+
+
+class UserCredentials(BaseModel):
+    email: str
+    password: str
+
+    @classmethod
+    def as_form(
+        cls,
+        email: str = Form(),
+        password: str = Form(),
+    ):
+        return cls(
+            email=email,
+            password=password,
+        )

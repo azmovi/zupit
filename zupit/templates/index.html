@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Informações do Usuário</title>
+    <title>Forms procurar viagem</title>
 </head>
 <body>
-    <h1>Informações do Usuário</h1>
     {% if not user %}
-        <p>Usuário não encontrado. <a href="/form">Clique aqui para se cadastrar</a>.</p>
+        <a href="/sign-in">Entrar na conta (sign-in).</a>
+        <a href="/sign-up">Cadastrar no aplicativo(sign-up).</a>
     {% else %}
-        <p>Nome: {{ user.name }}</p>
-        <p>Email: {{ user.email }}</p>
-        <p>Data de Nascimento: {{ user.birthday }}</p>
-        <p>Sexo: {{ user.sex }}</p>
-        {% if user.cpf %}
-            <p>CPF: {{ user.cpf }}</p>
-        {% elif user.rnm %}
-            <p>RNM: {{ user.rnm }}</p>
-        {% endif %}
-        <p>Deslogar <a href="/logoff">Clique aqui para se deslogar</a>.</p>
+        <a href="/profile">Icone para entrar na conta do usuario</a>
     {% endif %}
+    <form action="/get-travels" method="GET">
+        <label for="leaving">Para onde vai?</label><br>
+        <input type="text" id="leaving" name="leaving" required><br><br>
+
+        <label for="going">Para onde está indo?</label><br>
+        <input type="text" id="going" name="going" required><br><br>
+
+        <label for="date">Data</label><br>
+        <input type="date" id="date" name="going" required><br><br>
+
+        <button type="submit">Enviar</button>
+    </form>
+
 </body>
 </html>
 
