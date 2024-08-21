@@ -1,5 +1,7 @@
 import json
 
+from fastapi import Request
+
 from zupit.schemas import Public
 
 
@@ -8,3 +10,13 @@ def serialize_user(user: Public):
     user_serialize['birthday'] = user.birthday.isoformat()
     user_serialize['sex'] = user.sex.value
     return json.dumps(user_serialize)
+
+
+def get_user_from_session(request: Request):
+    try:
+        user_json = request.session.get('user')
+        if user_json:
+            return json.loads(user_json)
+    except Exception:
+        pass
+    return None

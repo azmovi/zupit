@@ -97,3 +97,9 @@ class UserCredentials(BaseModel):
             email=email,
             password=password,
         )
+
+
+class Driver(BaseModel):
+    id: int
+    cnh: str
+    preferences: Optional[str] = None

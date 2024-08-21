@@ -210,3 +210,15 @@ BEGIN
 END;
 $$;
 
+-----------------------------------------------------------------
+---------------------------Caronista-------------------------------
+-----------------------------------------------------------------
+
+CREATE TABLE driver(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    rating DOUBLE NOT NULL,
+    cnh VARCHAR(9) NOT NULL,
+    preferences VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+)

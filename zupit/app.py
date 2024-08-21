@@ -10,8 +10,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from zupit.database import Connection
 from zupit.router import users
 from zupit.router.users import confirm_user, create_user
+from zupit.router.driver import get_driver
 from zupit.schemas import Public, User, UserCredentials
-from zupit.utils import serialize_user
+from zupit.utils import serialize_user, get_user_from_session
 
 app = FastAPI()
 
@@ -25,14 +26,7 @@ app.include_router(users.router)
 
 @app.get('/', response_class=HTMLResponse)
 def form_seach_travels(request: Request):
-    user = None
-    try:
-        user_json = request.session.get('user')
-        if user_json:
-            user = json.loads(user_json)
-    except Exception:
-        user = None
-
+    user = get_user_from_session(request)
     return templates.TemplateResponse(
         request=request, name='index.html', context={'user': user}
     )
@@ -71,7 +65,7 @@ def sign_in(
     conn: Connection,
     credentials_form: UserCredentials = Depends(UserCredentials.as_form),
 ):
-    try: 
+    try:
         user_db = confirm_user(credentials_form, conn)
         user = serialize_user(user_db)
         request.session['user'] = user
@@ -79,30 +73,23 @@ def sign_in(
         return templates.TemplateResponse(
             'main.html', {'request': request, 'user': user}
         )
-    except:
+    except Exception:
         return RedirectResponse(url='/sign-in', status_code=HTTPStatus.FOUND)
 
-# @app.get('/offer', response_class=HTMLResponse)
-# def form_sign_in(request: Request, user: Public):
-#
-#     if caronista: 
-#         return templates.TemplateResponse('offer.html', {'request': request})
-#     else:
-#         return templates.TemplateResponse('.html', {'request': request})
-#
-# @app.post('/sign-in', response_class=HTMLResponse)
-# def sign_in(
-#     request: Request,
-#     conn: Connection,
-#     credentials_form: UserCredentials = Depends(UserCredentials.as_form),
-# ):
-#     user_db = confirm_user(credentials_form, conn)
-#     user = serialize_user(user_db)
-#     request.session['user'] = user
-#
-#     return templates.TemplateResponse(
-#         'main.html', {'request': request, 'user': user}
-#     )
+
+@app.get('/offer', response_class=HTMLResponse)
+def offer(request: Request, conn: Connection):
+    if user := get_user_from_session(request):
+        if driver := get_driver(user.id, conn):
+            return templates.TemplateResponse(
+                'offer.html',
+                {'request': request, 'user': user, 'driver': driver}
+            )
+
+    return templates.TemplateResponse(
+        'form_driver.html', {'request': request, 'user': user}
+    )
+
 
 @app.get('/main', response_class=HTMLResponse)
 def main(request: Request, user: Public):
@@ -110,7 +97,10 @@ def main(request: Request, user: Public):
         'main.html', {'request': request, 'user': user}
     )
 
+
 @app.get('/logoff', response_class=HTMLResponse)
 def logoff(request: Request):
     request.session.clear()
     return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)
+
+
