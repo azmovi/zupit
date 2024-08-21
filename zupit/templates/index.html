@@ -7,16 +7,15 @@
     <link rel="stylesheet" href="http://localhost:8000/static/style.css">
 </head>
 <body>
-    <section >
-        <img src="http://localhost:8000/static/assets/logo.png" alt="Logo" width="300" height="200">
+    <section>
+        <img src="http://localhost:8000/static/assets/logo.png" alt="Logo" width="100" height="100">
         <form action="/get-travels" method="GET">
             
             <input type="text" id="leaving" name="leaving" placeholder="Digite a cidade de origem" required><br><br>
             
             <input type="text" id="going" placeholder="Digite a cidade de destino" name="going" required><br><br>
-            <div class="space-between">
-                <input type="date" id="date" name="date" placeholder="Selecione a data" required>
-            </div>
+            
+            <input type="date" id="date" name="date" placeholder="Selecione a data" required>
             
         </form>
         <button class="button2" type="submit">
