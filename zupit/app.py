@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from zupit.database import Connection
 from zupit.router import users
 from zupit.router.users import confirm_user, create_user
-from zupit.schemas import User, UserCredentials
+from zupit.schemas import Public, User, UserCredentials
 from zupit.utils import serialize_user
 
 app = FastAPI()
@@ -71,14 +71,44 @@ def sign_in(
     conn: Connection,
     credentials_form: UserCredentials = Depends(UserCredentials.as_form),
 ):
-    user_db = confirm_user(credentials_form, conn)
-    user = serialize_user(user_db)
-    request.session['user'] = user
+    try: 
+        user_db = confirm_user(credentials_form, conn)
+        user = serialize_user(user_db)
+        request.session['user'] = user
 
+        return templates.TemplateResponse(
+            'main.html', {'request': request, 'user': user}
+        )
+    except:
+        return RedirectResponse(url='/sign-in', status_code=HTTPStatus.FOUND)
+
+# @app.get('/offer', response_class=HTMLResponse)
+# def form_sign_in(request: Request, user: Public):
+#
+#     if caronista: 
+#         return templates.TemplateResponse('offer.html', {'request': request})
+#     else:
+#         return templates.TemplateResponse('.html', {'request': request})
+#
+# @app.post('/sign-in', response_class=HTMLResponse)
+# def sign_in(
+#     request: Request,
+#     conn: Connection,
+#     credentials_form: UserCredentials = Depends(UserCredentials.as_form),
+# ):
+#     user_db = confirm_user(credentials_form, conn)
+#     user = serialize_user(user_db)
+#     request.session['user'] = user
+#
+#     return templates.TemplateResponse(
+#         'main.html', {'request': request, 'user': user}
+#     )
+
+@app.get('/main', response_class=HTMLResponse)
+def main(request: Request, user: Public):
     return templates.TemplateResponse(
         'main.html', {'request': request, 'user': user}
     )
-
 
 @app.get('/logoff', response_class=HTMLResponse)
 def logoff(request: Request):
