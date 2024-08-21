@@ -24,6 +24,8 @@ services:
       - zupit_database
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@zupit_database:5432/zupit_db
+    volumes:
+      - .:/app
 
 volumes:
   pgdata:
