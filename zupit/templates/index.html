@@ -4,26 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forms procurar viagem</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    {% if not user %}
-        <a href="/sign-in">Entrar na conta (sign-in).</a>
-        <a href="/sign-up">Cadastrar no aplicativo(sign-up).</a>
-    {% else %}
-        <a href="/profile">Icone para entrar na conta do usuario</a>
-    {% endif %}
-    <form action="/get-travels" method="GET">
-        <label for="leaving">Para onde vai?</label><br>
-        <input type="text" id="leaving" name="leaving" required><br><br>
-
-        <label for="going">Para onde está indo?</label><br>
-        <input type="text" id="going" name="going" required><br><br>
-
-        <label for="date">Data</label><br>
-        <input type="date" id="date" name="going" required><br><br>
-
-        <button type="submit">Enviar</button>
-    </form>
+    <section >
+        <img src="/logo.png" alt="Logo" width="300" height="200">
+        <form action="/get-travels" method="GET">
+            
+            <input type="text" id="leaving" name="leaving" placeholder="Digite a cidade de origem" required><br><br>
+            
+            <input type="text" id="going" placeholder="Digite a cidade de destino" name="going" required><br><br>
+            <div class="space-between">
+                <input type="date" id="date" name="date" placeholder="Selecione a data" required>
+                <input type="time" id="time" name="time" placeholder="Selecione a hora" required>
+            </div>
+            
+        </form>
+        <button class="button2" type="submit">
+            Pesquisar
+        </button>
+        {% if not user %}
+            <div class="space-between">
+                <a class="button1" href="/sign-in">Entrar na conta</a>
+                <a class="button1" href="/sign-up">Cadastre-se</a>
+            </div>
+        {% else %}
+            <a href="/profile">Icone para entrar na conta do usuario</a>
+        {% endif %}
+    </section>
 
 </body>
 </html>

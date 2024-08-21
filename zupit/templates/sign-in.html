@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Login</h1>
-    <form action="/sign-in" method="POST">
-        <label for="email">Email:</label><br>
-        <input type="email" id="email" name="email" required><br><br>
-
-        <label for="password">Senha:</label><br>
-        <input type="password" id="password" name="password" required><br><br>
-
-        <button type="submit">Entrar</button>
-    </form>
-    <a href="/sign-up"><button>Não tenho conta</button></a>
+    <section class="">
+        <h1>LOGIN</h1>
+        <form action="/sign-in" method="POST">
+            <input type="email" id="email" placeholder="E-mail" name="email" required><br><br>
+            <input type="password" id="password" name="password" placeholder="Senha"  required><br><br>
+    
+            <button class="button2" type="submit">Entrar</button>
+        </form>
+        <a class="button3" href="/sign-up">Crie sua conta</a>
+    </section>
 </body>
 </html>
 
