@@ -29,27 +29,26 @@
                 <option value="MAN">Homem</option>
                 <option value="WOMAN">Mulher</option>
             </select><br><br>
-    
-            <label>Nacionalidade:</label><br>
-            <input type="radio" id="brazilian" name="nationality" value="BRAZILIAN" checked>
-            <label for="brazilian">Brasileiro</label><br>
-    
-            <input type="radio" id="foreigner" name="nationality" value="FOREIGNER">
-            <label for="foreigner">Estrangeiro</label><br><br>
+            <div class="justify-start">
+                <label>Nacionalidade:</label><br>
+                <input type="radio" id="brazilian" name="nationality" value="BRAZILIAN" checked>
+                <label for="brazilian">Brasileiro</label><br>
+                
+                <input type="radio" id="foreigner" name="nationality" value="FOREIGNER">
+                <label for="foreigner">Estrangeiro</label><br><br>
+            </div>
     
             <div id="brazilian_label" class="hidden">
-                <label for="cpf">CPF:</label>
-                <input type="text" id="cpf" name="cpf"><br><br>
+                <input type="text"  placeholder="CPF" id="cpf" name="cpf"><br><br>
             </div>
     
             <div id="foreigner_label" class="hidden">
-                <label for="rnm">RNM:</label>
-                <input type="text" id="rnm" name="rnm"><br><br>
+                <input type="text" placeholder="RNM" id="rnm" name="rnm"><br><br>
             </div>
     
-            <button type="submit">Enviar</button>
+            <button class="button3" type="submit">Enviar</button>
         </form>
-        <a href="/sign-in"><button>Ja possui cadastro?</button></a>
+        <a class="button3" href="/sign-in">Ja possui cadastro?</a>
     </section>
 
     <script>

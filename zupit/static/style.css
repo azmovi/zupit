@@ -2,6 +2,7 @@ body {
     background-color: rgba(3, 21, 84, 1); /* O valor alpha foi adicionado */
     display: flex;
     justify-content: center;
+    align-items: center; /* Alinha verticalmente */
     height: 100vh; 
     font-family: Arial, sans-serif;
     color: #FFFFFF;
@@ -33,6 +34,11 @@ form {
     display: none;
 }
 
+.justify-start{
+    display: flex;
+    justify-content: start;
+    align-items: center;
+}
 .space-between {
     display: flex;
     flex-direction: row;
