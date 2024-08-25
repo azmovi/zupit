@@ -7,13 +7,13 @@
 CREATE TYPE gender AS ENUM ('MAN', 'WOMAN');
 
 CREATE TYPE user_public AS (
-    user_id INTEGER,
-    user_name VARCHAR,
-    user_email VARCHAR,
-    user_birthday DATE,
-    user_sex gender,
-    user_icon BYTEA,
-    user_doc VARCHAR
+    id INTEGER,
+    name VARCHAR,
+    email VARCHAR,
+    birthday DATE,
+    sex gender,
+    icon BYTEA,
+    doc VARCHAR
 );
 
 CREATE TABLE users (
@@ -216,20 +216,33 @@ $$;
 ---------------------------Caronista-------------------------------
 -----------------------------------------------------------------
 
+CREATE TYPE driver_public AS (
+    id INTEGER,
+    cnh VARCHAR(9),
+    rating FLOAT,
+    preferences VARCHAR(255)
+);
+
 CREATE TABLE driver(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    rating FLOAT NOT NULL,
     cnh VARCHAR(9) NOT NULL,
+    rating FLOAT NOT NULL,
     preferences VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE TABLE car(
+    renavam VARCHAR(11) PRIMARY KEY,
+
+)
+
 
 CREATE FUNCTION create_driver(
     p_user_id INTEGER,
     p_cnh VARCHAR,
     p_preferences VARCHAR
-) RETURNS SETOF driver
+) RETURNS SETOF driver_public
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -237,7 +250,21 @@ BEGIN
     VALUES (p_user_id, 0, p_cnh, p_preferences);
 
     RETURN QUERY
-    SELECT id, rating, cnh, preferences
+    SELECT id, cnh, rating, preferences
+    FROM driver
+    WHERE user_id = p_user_id
+    LIMIT 1;
+END;
+$$;
+
+
+CREATE FUNCTION get_driver(p_user_id INTEGER)
+RETURNS SETOF driver_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT id, cnh, rating, preferences
     FROM driver
     WHERE user_id = p_user_id
     LIMIT 1;

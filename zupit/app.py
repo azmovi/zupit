@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from types import resolve_bases
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -8,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from zupit.database import Connection
 from zupit.router import drivers, users
+from zupit.schemas import Public
 from zupit.utils import get_user_from_request
 
 app = FastAPI()
@@ -50,7 +52,9 @@ def form_sign_in(request: Request):
 
 @app.get('/offer', response_class=HTMLResponse)
 def offer(request: Request, conn: Connection):
+    user = get_user_from_request(request)
     if user := get_user_from_request(request):
+        user = Public(**user)
         if driver := drivers.get_driver(user.id, conn):
             return templates.TemplateResponse(
                 'offer.html',

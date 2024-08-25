@@ -7,23 +7,6 @@ from zupit.database import Connection
 from zupit.schemas import Driver, DriverPublic
 
 
-def get_driver_db(user_id: int, conn: Connection) -> Optional[DriverPublic]:
-    sql = 'SELECT * FROM get_driver(%s);'
-
-    with conn.cursor() as cur:
-        cur.execute(sql, (user_id,))
-        driver_db = cur.fetchone()
-
-    if driver_db:
-        return DriverPublic(
-            id=driver_db[0],
-            rating=driver_db[1],
-            cnh=driver_db[2],
-            preferences=driver_db[3],
-        )
-    return None
-
-
 def create_driver_db(driver: Driver, conn: Connection):
     sql = 'SELECT * FROM create_driver(%s, %s, %s);'
 
@@ -44,7 +27,23 @@ def create_driver_db(driver: Driver, conn: Connection):
             )
     return DriverPublic(
         id=driver_db[0],
-        rating=driver_db[1],
-        cnh=driver_db[2],
+        cnh=driver_db[1],
+        rating=driver_db[2],
         preferences=driver_db[3],
     )
+
+
+def get_driver_db(user_id: int, conn: Connection) -> Optional[DriverPublic]:
+    sql = 'SELECT * FROM get_driver(%s);'
+    with conn.cursor() as cur:
+        cur.execute(sql, (user_id,))
+        driver_db = cur.fetchone()
+
+    if driver_db:
+        return DriverPublic(
+            id=driver_db[0],
+            cnh=driver_db[1],
+            rating=driver_db[2],
+            preferences=driver_db[3],
+        )
+    return None

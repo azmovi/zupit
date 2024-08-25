@@ -109,9 +109,10 @@ def test_wrong_emai_user_credentials(client, user):
         'email': 'wrongemail@example.com',
         'password': '123',
     }
-    response = client.post('/users/confirm', json=payload)
+    response = client.post('/users/confirm-user', data=payload)
 
-    assert response.json() == {'detail': 'User not found'}
+    assert response.context['error'] == 'User not found'
+    assert response.template.name == 'sign-in.html'
 
 
 def test_wrong_password_user_credentials(client, user):
@@ -119,6 +120,8 @@ def test_wrong_password_user_credentials(client, user):
         'email': user.email,
         'password': 'wrongpassword',
     }
-    response = client.post('/users/confirm', json=payload)
 
-    assert response.json() == {'detail': 'User not found'}
+    response = client.post('/users/confirm-user', data=payload)
+
+    assert response.context['error'] == 'User not found'
+    assert response.template.name == 'sign-in.html'

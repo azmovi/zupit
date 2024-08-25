@@ -43,7 +43,7 @@ def create_user(
         )
 
 
-@router.get(
+@router.post(
     '/confirm-user',
     response_class=HTMLResponse,
 )
