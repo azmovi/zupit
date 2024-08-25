@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from datetime import date
 
 import pytest
@@ -7,8 +8,8 @@ from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
 from zupit.database import get_db_conn
-from zupit.router.users import create_user
 from zupit.schemas import Gender, Nationality, Public, User
+from zupit.service.users_crud import create_user_db
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def init(cursor, file_path):
 
 
 @pytest.fixture
-def client(connection):
+def client(connection) -> Generator[TestClient]:
     def get_connection_override():
         return connection
 
@@ -66,5 +67,5 @@ def user(connection) -> Public:
         cpf='12345678900',
         nationality=Nationality('BRAZILIAN'),
     )
-    user = create_user(user, connection)
+    user = create_user_db(user, connection)
     return user

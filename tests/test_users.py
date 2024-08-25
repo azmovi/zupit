@@ -1,6 +1,3 @@
-from http import HTTPStatus
-
-
 def test_create_brazilian(client):
     esperado = {
         'name': 'antonio',
@@ -12,13 +9,14 @@ def test_create_brazilian(client):
         **esperado,
         'password': '123',
         'nationality': 'BRAZILIAN',
+        'icon': 'None',
         'cpf': '12345678900',
     }
 
-    response = client.post('/users', json=payload)
+    response = client.post('/users', data=payload)
 
-    assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == {
+    assert response.template.name == 'index.html'
+    assert response.context['user'] == {
         'id': 1,
         'icon': None,
         'doc': payload['cpf'],
@@ -37,14 +35,13 @@ def test_create_foreigner(client):
         **esperado,
         'password': '123',
         'nationality': 'FOREIGNER',
-        'icon': 'None',
         'rnm': '02140873',
     }
 
-    response = client.post('/users', json=payload)
+    response = client.post('/users', data=payload)
 
-    assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == {
+    assert response.template.name == 'index.html'
+    assert response.context['user'] == {
         'id': 1,
         'icon': None,
         'doc': payload['rnm'],
@@ -62,13 +59,13 @@ def test_error_create_user_existent(client, user):
         'cpf': user.doc,
         'nationality': 'BRAZILIAN',
     }
-    response = client.post('/users', json=payload)
+    response = client.post('/users', data=payload)
 
-    assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json() == {'detail': 'User already in database'}
+    assert response.context['error'] == 'User already exists'
+    assert response.template.name == 'sign-up.html'
 
 
-def test_create_foreigner_invalid(client):
+def test_create_user_invalid(client):
     payload = {
         'name': 'antonio',
         'email': 'antonio@example.com',
@@ -79,49 +76,10 @@ def test_create_foreigner_invalid(client):
         'nationality': 'FOREIGNER',
     }
 
-    response = client.post('/users', json=payload)
+    response = client.post('/users', data=payload)
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {'detail': 'Input invalid'}
-
-
-def test_create_brazilian_invalid(client):
-    payload = {
-        'name': 'antonio',
-        'email': 'antonio@example.com',
-        'birthday': '2000-01-01',
-        'sex': 'MAN',
-        'rnm': '12345678',
-        'password': '123',
-        'nationality': 'BRAZILIAN',
-    }
-
-    response = client.post('/users', json=payload)
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {'detail': 'Input invalid'}
-
-
-def test_get_user(client, user):
-    response = client.get(f'/users/{user.id}')
-    esperado = {
-        'id': 1,
-        'name': 'antonio',
-        'email': 'antonio@example.com',
-        'birthday': '2002-07-08',
-        'sex': 'MAN',
-        'doc': '12345678900',
-        'icon': None,
-    }
-    assert response.status_code == HTTPStatus.OK
-    assert response.json() == esperado
-
-
-def test_get_user_not_exist(client):
-    response = client.get('/users/1')
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.context['error'] == 'Input invalid'
+    assert response.template.name == 'sign-up.html'
 
 
 def test_confirm_user_credentials(client, user):
@@ -137,10 +95,13 @@ def test_confirm_user_credentials(client, user):
         'email': user.email,
         'password': '123',
     }
-    response = client.post('/users/confirm', json=payload)
+    response = client.post('/users/confirm-user', data=payload)
 
-    assert response.status_code == HTTPStatus.OK
-    assert response.json() == {**esperado, 'email': user.email}
+    assert response.template.name == 'index.html'
+    assert response.context['user'] == {
+        'email': user.email,
+        **esperado,
+    }
 
 
 def test_wrong_emai_user_credentials(client, user):
@@ -150,7 +111,6 @@ def test_wrong_emai_user_credentials(client, user):
     }
     response = client.post('/users/confirm', json=payload)
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}
 
 
@@ -161,5 +121,4 @@ def test_wrong_password_user_credentials(client, user):
     }
     response = client.post('/users/confirm', json=payload)
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}

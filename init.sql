@@ -1,7 +1,9 @@
 \c zupit_db
+
 -----------------------------------------------------------------
 ---------------------------USUARIO-------------------------------
 -----------------------------------------------------------------
+
 CREATE TYPE gender AS ENUM ('MAN', 'WOMAN');
 
 CREATE TYPE user_public AS (
@@ -217,8 +219,27 @@ $$;
 CREATE TABLE driver(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    rating DOUBLE NOT NULL,
+    rating FLOAT NOT NULL,
     cnh VARCHAR(9) NOT NULL,
     preferences VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
-)
+);
+
+CREATE FUNCTION create_driver(
+    p_user_id INTEGER,
+    p_cnh VARCHAR,
+    p_preferences VARCHAR
+) RETURNS SETOF driver
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO driver (user_id, rating, cnh, preferences)
+    VALUES (p_user_id, 0, p_cnh, p_preferences);
+
+    RETURN QUERY
+    SELECT id, rating, cnh, preferences
+    FROM driver
+    WHERE user_id = p_user_id
+    LIMIT 1;
+END;
+$$;

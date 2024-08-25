@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário</title>
+    <link rel="stylesheet" href="http://localhost:8000/static/style.css">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <section class="">
+        <h1>Cadastro de Caroneiro</h1>
+        <form method="POST" action="/drivers">
+            <input type="hidden" id="id" value="{{  user.id }}"/>
+            <input type="text" id="cnh" placeholder="CNH" name="cnh" required><br><br>
+            <input type="text" id="preferences" placeholder="Suas preferências" name="preferences" required><br><br>
+        </form>
+        <a class="button3" href="/">Voltar</a>
+    </section>
+
+    <script>
+    </script>
+</body>
+</html>
+
