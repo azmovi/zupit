@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="http://localhost:8000/static/style.css">
 </head>
 <body>
-    <h1>Perfil do Usuário</h1>
-    <p><strong>Nome:</strong> {{ user.name }}</p>
-    <p><strong>Email:</strong> {{ user.email }}</p>
-    <p><strong>Documento:</strong> {{ user.doc }}</p>
-
-    <a href="/offer">Oferecer Carona</a>
-    <a href="/logoff">Sair</a>
+    <section>    
+        {% include 'navbar.html' %}
+        <h1>Perfil do Usuário</h1>
+        <p><strong>Nome:</strong> {{ user.name }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Documento:</strong> {{ user.doc }}</p>
+    
+        <a href="/offer">Oferecer Carona</a>
+        <a href="/logoff">Sair</a>
+    </section>
 </body>
 </html>
 

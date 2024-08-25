@@ -7,8 +7,11 @@
     <link rel="stylesheet" href="http://localhost:8000/static/style.css">
 </head>
 <body>
-    <section>
-        <img src="http://localhost:8000/static/assets/logo.png" alt="Logo" width="100" height="100">
+    <section id="pesquisa">
+        {% include 'navbar.html' %}
+        <h1>
+            PARA ONDE VOCÊ QUER IR ?
+        </h1>
         <form action="/get-travels" method="GET">
             
             <input type="text" id="leaving" name="leaving" placeholder="Digite a cidade de origem" required><br><br>
