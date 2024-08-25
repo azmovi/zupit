@@ -19,6 +19,10 @@ section {
     text-align: center ;
 }
 
+.cadastro {
+    margin-top: 30px;
+}
+
 form {
     width: 100%;
 }
@@ -157,7 +161,7 @@ input[type="date"]::placeholder {
 
 
 .navbar-links .user {
-    color: #0011ff;
+    color: #37479e;
     text-decoration: none;
     font-weight: bold;
     padding: 9px 20px;
@@ -167,7 +171,7 @@ input[type="date"]::placeholder {
 
 
 .navbar-links a {
-    color: #0011ff;
+    color: #324cda;
     text-decoration: none;
     font-size: 15px;
     font-weight: bold;
