@@ -13,6 +13,7 @@
 </head>
 <body>
     <section class="">
+        {% include 'navbar.html' %}
         <h1>Cadastro de Caroneiro</h1>
         <form method="POST" action="/drivers">
             <input type="hidden" id="id" value="{{  user.id }}"/>
