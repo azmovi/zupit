@@ -238,7 +238,7 @@ CREATE TABLE car(
     model VARCHAR(50),
     plate VARCHAR(7),
     color VARCHAR(7)
-)
+);
 
 
 CREATE FUNCTION create_driver(

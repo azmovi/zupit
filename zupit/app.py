@@ -67,7 +67,7 @@ def offer(request: Request, conn: Connection):
 
 
 @app.get('/car', response_class=HTMLResponse)
-def offer(request: Request):
+def car(request: Request):
     return templates.TemplateResponse(
         'car.html', {'request': request}
     )
