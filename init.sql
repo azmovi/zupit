@@ -234,7 +234,10 @@ CREATE TABLE driver(
 
 CREATE TABLE car(
     renavam VARCHAR(11) PRIMARY KEY,
-
+    brand VARCHAR(50),
+    model VARCHAR(50),
+    plate VARCHAR(7),
+    color VARCHAR(7)
 )
 
 

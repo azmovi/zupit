@@ -66,6 +66,13 @@ def offer(request: Request, conn: Connection):
     )
 
 
+@app.get('/car', response_class=HTMLResponse)
+def offer(request: Request):
+    return templates.TemplateResponse(
+        'car.html', {'request': request}
+    )
+
+
 @app.get('/logoff', response_class=HTMLResponse)
 def logoff(request: Request):
     request.session.clear()
