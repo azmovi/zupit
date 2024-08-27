@@ -38,17 +38,19 @@ def get_user_db(
 
 
 def create_user_db(user: User, session: Session) -> Public:
-    # Verifique se user.sex.value está no conjunto de valores válidos
-    if user.sex.value not in set(['MAN', 'WOMAN']):
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail='xpto'
-        )
-
     if user.nationality.value == 'BRAZILIAN':
         sql = text(
-            'SELECT * FROM create_brazilian(:name, :email, :password, '
-            ':birthday, :sex, :doc);'
+            """
+            SELECT * FROM public.create_brazilian(
+                CAST(:name as VARCHAR),
+                CAST(:email as VARCHAR),
+                CAST(:password as VARCHAR),
+                CAST(:birthday as DATE),
+                CAST(:sex as VARCHAR),
+                CAST(:doc as VARCHAR)
+            );
+
+            """
         )
         doc = user.cpf
     else:
@@ -62,11 +64,11 @@ def create_user_db(user: User, session: Session) -> Public:
         user_db = session.execute(
             sql,
             {
-                'name': user.name,
+                'name': str(user.name),
                 'email': user.email,
                 'password': user.password,
                 'birthday': user.birthday,
-                'sex': user.sex.value,  # Passa o valor de sexo
+                'sex': user.sex.value,
                 'doc': doc,
             },
         ).fetchone()

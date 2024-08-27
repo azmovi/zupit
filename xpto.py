@@ -1,5 +1,3 @@
-import requests
-
 payload = {
     'name': 'Antonio',
     'email': 'antonio@example.com',
@@ -10,7 +8,7 @@ payload = {
     'cpf': '12345678900',
 }
 
-response = requests.post('http://localhost:8000/users', json=payload)
-print(response.status_code)
-print(response.headers)
-print(response.text)
+# response = requests.post('http://localhost:8000/users', json=payload)
+# print(response.status_code)
+# print(response.headers)
+# print(response.text)

@@ -48,7 +48,7 @@ addopts = '-p no:warnings'
 
 [tool.taskipy.tasks]
 lint = 'ruff check . && ruff check . --diff'
-format = 'ruff check . --fix && ruff format .'
+format = 'ruff check . --fix --unsafe-fixes && ruff format .'
 run = 'fastapi dev zupit/app.py'
 pre_test = 'task lint'
 test = 'pytest -s -x --cov=zupit -vv'
