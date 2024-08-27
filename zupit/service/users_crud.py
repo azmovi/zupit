@@ -2,8 +2,9 @@ from http import HTTPStatus
 from typing import Optional, Union
 
 from fastapi import HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from zupit.database import Connection
 from zupit.schemas import (
     Gender,
     Public,
@@ -13,15 +14,15 @@ from zupit.schemas import (
 )
 
 
-def get_user_db(campo: Union[str, int], conn) -> Optional[UserPublic]:
+def get_user_db(
+    campo: Union[str, int], session: Session
+) -> Optional[UserPublic]:
     if isinstance(campo, int):
-        sql = 'SELECT * FROM get_user_by_id(%s);'
+        sql = text('SELECT * FROM get_user_by_id(:campo);')
     elif isinstance(campo, str):
-        sql = 'SELECT * FROM get_user_by_email(%s);'
+        sql = text('SELECT * FROM get_user_by_email(:campo);')
 
-    with conn.cursor() as cur:
-        cur.execute(sql, (campo,))
-        user_db = cur.fetchone()
+    user_db = session.execute(sql, {'campo': campo}).fetchone()
 
     if user_db:
         return Public(
@@ -36,59 +37,83 @@ def get_user_db(campo: Union[str, int], conn) -> Optional[UserPublic]:
     return None
 
 
-def create_user_db(user: User, conn: Connection):
+def create_user_db(user: User, session: Session) -> Public:
+    # Verifique se user.sex.value está no conjunto de valores válidos
+    if user.sex.value not in set(['MAN', 'WOMAN']):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='xpto'
+        )
+
     if user.nationality.value == 'BRAZILIAN':
-        sql = 'SELECT * FROM create_brazilian(%s, %s, %s, %s, %s, %s);'
+        sql = text(
+            'SELECT * FROM create_brazilian(:name, :email, :password, '
+            ':birthday, :sex, :doc);'
+        )
         doc = user.cpf
     else:
-        sql = 'SELECT * FROM create_foreigner(%s, %s, %s, %s, %s, %s);'
+        sql = text(
+            'SELECT * FROM create_foreigner(:name, :email, :password, '
+            ':birthday, :sex, :doc);'
+        )
         doc = user.rnm
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                sql,
-                (
-                    user.name,
-                    user.email,
-                    user.password,
-                    user.birthday,
-                    user.sex.value,
-                    doc,
-                ),
-            )
-            user_db = cur.fetchone()
-        except Exception:
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
-            )
-    return Public(
-        id=user_db[0],
-        name=user_db[1],
-        email=user_db[2],
-        birthday=user_db[3],
-        sex=Gender(user_db[4]),
-        icon=user_db[5],
-        doc=user_db[6],
-    )
+    try:
+        user_db = session.execute(
+            sql,
+            {
+                'name': user.name,
+                'email': user.email,
+                'password': user.password,
+                'birthday': user.birthday,
+                'sex': user.sex.value,  # Passa o valor de sexo
+                'doc': doc,
+            },
+        ).fetchone()
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+        )
+
+    if user_db:
+        return Public(
+            id=user_db[0],
+            name=user_db[1],
+            email=user_db[2],
+            birthday=user_db[3],
+            sex=Gender(user_db[4]),
+            icon=user_db[5],
+            doc=user_db[6],
+        )
+    else:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT, detail='User creation failed'
+        )
 
 
-def confirm_user_db(user: UserCredentials, conn: Connection):
-    sql = 'SELECT * FROM confirm_user(%s, %s)'
-    with conn.cursor() as cur:
-        try:
-            cur.execute(sql, (user.email, user.password))
-            user_db = cur.fetchone()
-        except Exception:
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-            )
-    return Public(
-        id=user_db[0],
-        name=user_db[1],
-        email=user_db[2],
-        birthday=user_db[3],
-        sex=Gender(user_db[4]),
-        icon=user_db[5],
-        doc=user_db[6],
-    )
+def confirm_user_db(user: UserCredentials, session: Session) -> Public:
+    sql = text('SELECT * FROM confirm_user(:email, :password);')
+    try:
+        user_db = session.execute(
+            sql, {'email': user.email, 'password': user.password}
+        ).fetchone()
+    except Exception:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+
+    if user_db:
+        return Public(
+            id=user_db[0],
+            name=user_db[1],
+            email=user_db[2],
+            birthday=user_db[3],
+            sex=Gender(user_db[4]),
+            icon=user_db[5],
+            doc=user_db[6],
+        )
+    else:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail='Invalid credentials'
+        )

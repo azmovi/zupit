@@ -2,42 +2,47 @@ from http import HTTPStatus
 from typing import Optional
 
 from fastapi import HTTPException
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-from zupit.database import Connection
 from zupit.schemas import Driver, DriverPublic
 
 
-def create_driver_db(driver: Driver, conn: Connection):
-    sql = 'SELECT * FROM create_driver(%s, %s, %s);'
+def create_driver_db(driver: Driver, conn: Session) -> DriverPublic:
+    sql = text('SELECT * FROM create_driver(:user_id, :cnh, :preferences)')
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute(
-                sql,
-                (
-                    driver.user_id,
-                    driver.cnh,
-                    driver.preferences,
-                ),
+    try:
+        driver_db = conn.execute(
+            sql,
+            {
+                'user_id': driver.user_id,
+                'cnh': driver.cnh,
+                'preferences': driver.preferences,
+            },
+        ).fetchone()
+
+        if driver_db:
+            return DriverPublic(
+                id=driver_db[0],
+                cnh=driver_db[1],
+                rating=driver_db[2],
+                preferences=driver_db[3],
             )
-            driver_db = cur.fetchone()
-        except Exception:
+        else:
             raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+                status_code=HTTPStatus.CONFLICT,
+                detail='Driver already in database',
             )
-    return DriverPublic(
-        id=driver_db[0],
-        cnh=driver_db[1],
-        rating=driver_db[2],
-        preferences=driver_db[3],
-    )
+
+    except Exception:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+        )
 
 
-def get_driver_db(user_id: int, conn: Connection) -> Optional[DriverPublic]:
-    sql = 'SELECT * FROM get_driver(%s);'
-    with conn.cursor() as cur:
-        cur.execute(sql, (user_id,))
-        driver_db = cur.fetchone()
+def get_driver_db(user_id: int, conn: Session) -> Optional[DriverPublic]:
+    sql = text('SELECT * FROM get_driver(:user_id);')
+    driver_db = conn.execute(sql, {'user_id': user_id}).fetchone()
 
     if driver_db:
         return DriverPublic(

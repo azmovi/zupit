@@ -2,8 +2,9 @@ from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.orm import Session
 
-from zupit.database import Connection
+from zupit.database import get_session
 from zupit.schemas import User, UserCredentials, UserPublic
 from zupit.service.users_crud import (
     confirm_user_db,
@@ -22,17 +23,17 @@ router = APIRouter(prefix='/users', tags=['users'])
 )
 def create_user(
     request: Request,
-    conn: Connection,
+    session: Session = Depends(get_session),
     user: User = Depends(User.as_form),
 ):
     try:
-        db_user = get_user_db(user.email, conn)
+        db_user = get_user_db(user.email, session)
         if db_user:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='User already exists'
             )
 
-        db_user = create_user_db(user, conn)
+        db_user = create_user_db(user, session)
         request.session['user'] = serialize_user(db_user)
         return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)
 
@@ -49,11 +50,11 @@ def create_user(
 )
 def confirm_user(
     request: Request,
-    conn: Connection,
+    session: Session = Depends(get_session),
     user: UserCredentials = Depends(UserCredentials.as_form),
 ) -> RedirectResponse:
     try:
-        db_user = confirm_user_db(user, conn)
+        db_user = confirm_user_db(user, session)
         request.session['user'] = serialize_user(db_user)
         return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)
 
@@ -68,8 +69,8 @@ def confirm_user(
     '/{user_id}',
     response_model=UserPublic,
 )
-def get_user(user_id: int, conn: Connection):
-    db_user = get_user_db(user_id, conn)
+def get_user(user_id: int, session: Session = Depends(get_session)):
+    db_user = get_user_db(user_id, session)
 
     if db_user is None:
         raise HTTPException(

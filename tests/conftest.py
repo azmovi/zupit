@@ -1,63 +1,61 @@
-from collections.abc import Generator
 from datetime import date
+from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from psycopg import connect
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.orm import Session, sessionmaker
 from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
-from zupit.database import get_db_conn
+from zupit.database import get_session
 from zupit.schemas import Gender, Nationality, Public, User
 from zupit.service.users_crud import create_user_db
 
 
-@pytest.fixture
-def connection():
+@pytest.fixture(scope='session')
+def engine() -> Generator[Engine, None, None]:
     with PostgresContainer('postgres:latest', driver='psycopg') as postgres:
-        conn_url = postgres.get_connection_url()
-        port = conn_url.split(':')[-1].split('/')[0]
-
-        conn = connect(
-            dbname='test',
-            user='test',
-            password='test',
-            host='localhost',
-            port=port,
-            autocommit=True,
-        )
-
-        cursor = conn.cursor()
-        init(cursor, 'init.sql')
-
-        yield conn
-
-        conn.rollback()
-        cursor.close()
-        conn.close()
-
-
-def init(cursor, file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        sql_script = file.read()[11:]
-        cursor.execute(sql_script)
-        cursor.connection.commit()
+        _engine = create_engine(postgres.get_connection_url())
+        yield _engine
 
 
 @pytest.fixture
-def client(connection) -> Generator[TestClient]:
-    def get_connection_override():
-        return connection
+def session(engine: Engine):
+    with engine.connect() as conn:
+        init_db(conn, 'init.sql')
+
+    SessionLocal = sessionmaker(bind=engine)
+    session = SessionLocal()
+
+    try:
+        yield session
+    finally:
+        session.rollback()
+        session.close()
+
+
+@pytest.fixture
+def client(session: Session):
+    def get_session_override():
+        return session
 
     with TestClient(app) as client:
-        app.dependency_overrides[get_db_conn] = get_connection_override
+        app.dependency_overrides[get_session] = get_session_override
         yield client
 
     app.dependency_overrides.clear()
 
 
+def init_db(conn: Connection, file_path: str):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        sql_script = file.read()[11:]
+        conn.execute(text(sql_script))
+
+
 @pytest.fixture
-def user(connection) -> Public:
+def user(session) -> Public:
     user = User(
         name='antonio',
         email='antonio@example.com',
@@ -67,5 +65,5 @@ def user(connection) -> Public:
         cpf='12345678900',
         nationality=Nationality('BRAZILIAN'),
     )
-    user = create_user_db(user, connection)
+    user = create_user_db(user, session)
     return user

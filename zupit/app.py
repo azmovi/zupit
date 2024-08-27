@@ -1,16 +1,19 @@
 from http import HTTPStatus
-from types import resolve_bases
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from zupit.database import Connection
+from zupit.database import get_session
 from zupit.router import drivers, users
 from zupit.schemas import Public
 from zupit.utils import get_user_from_request
+
+T_Session = Annotated[Session, Depends(get_session)]
 
 app = FastAPI()
 
@@ -51,11 +54,11 @@ def form_sign_in(request: Request):
 
 
 @app.get('/offer', response_class=HTMLResponse)
-def offer(request: Request, conn: Connection):
+def offer(request: Request, session: T_Session):
     user = get_user_from_request(request)
     if user := get_user_from_request(request):
         user = Public(**user)
-        if driver := drivers.get_driver(user.id, conn):
+        if driver := drivers.get_driver(user.id, session):
             return templates.TemplateResponse(
                 'offer.html',
                 {'request': request, 'user': user, 'driver': driver},
@@ -68,9 +71,7 @@ def offer(request: Request, conn: Connection):
 
 @app.get('/car', response_class=HTMLResponse)
 def car(request: Request):
-    return templates.TemplateResponse(
-        'car.html', {'request': request}
-    )
+    return templates.TemplateResponse('car.html', {'request': request})
 
 
 @app.get('/logoff', response_class=HTMLResponse)
