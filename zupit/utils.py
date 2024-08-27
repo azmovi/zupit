@@ -17,10 +17,7 @@ def serialize_driver(driver: DriverPublic):
 
 
 def get_user_from_request(request: Request):
-    try:
-        user_json = request.session.get('user')
-        if user_json:
-            return json.loads(user_json)
-    except Exception:
-        pass
+    user_json = request.session.get('user')
+    if user_json:
+        return json.loads(user_json)
     return None

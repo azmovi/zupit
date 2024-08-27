@@ -35,7 +35,9 @@ def create_user(
 
         db_user = create_user_db(user, session)
         request.session['user'] = serialize_user(db_user)
-        return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)
+        return RedirectResponse(
+            url='/search-travel', status_code=HTTPStatus.SEE_OTHER
+        )
 
     except HTTPException as exc:
         request.session['error'] = exc.detail
@@ -56,7 +58,9 @@ def confirm_user(
     try:
         db_user = confirm_user_db(user, session)
         request.session['user'] = serialize_user(db_user)
-        return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)
+        return RedirectResponse(
+            url='/search-travel', status_code=HTTPStatus.SEE_OTHER
+        )
 
     except HTTPException as exc:
         request.session['error'] = exc.detail

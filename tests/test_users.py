@@ -1,26 +1,28 @@
+import json
+
+
 def test_create_brazilian(client):
     esperado = {
         'name': 'antonio',
         'email': 'antonio@example.com',
         'birthday': '2000-01-01',
         'sex': 'MAN',
+        'icon': None,
     }
     payload = {
         **esperado,
         'password': '123',
         'nationality': 'BRAZILIAN',
-        'icon': 'None',
         'cpf': '12345678900',
     }
 
     response = client.post('/users', data=payload)
 
-    assert response.template.name == 'index.html'
-    assert response.context['user'] == {
+    assert response.template.name == 'search-travel.html'
+    assert json.loads(response.context['user']) == {
         'id': 1,
-        'icon': None,
-        'doc': payload['cpf'],
         **esperado,
+        'doc': payload['cpf'],
     }
 
 
@@ -30,6 +32,7 @@ def test_create_foreigner(client):
         'email': 'antonio@example.com',
         'birthday': '2000-01-01',
         'sex': 'MAN',
+        'icon': None,
     }
     payload = {
         **esperado,
@@ -40,10 +43,9 @@ def test_create_foreigner(client):
 
     response = client.post('/users', data=payload)
 
-    assert response.template.name == 'index.html'
-    assert response.context['user'] == {
+    assert response.template.name == 'search-travel.html'
+    assert json.loads(response.context['user']) == {
         'id': 1,
-        'icon': None,
         'doc': payload['rnm'],
         **esperado,
     }
@@ -97,8 +99,8 @@ def test_confirm_user_credentials(client, user):
     }
     response = client.post('/users/confirm-user', data=payload)
 
-    assert response.template.name == 'index.html'
-    assert response.context['user'] == {
+    assert response.template.name == 'search-travel.html'
+    assert json.loads(response.context['user']) == {
         'email': user.email,
         **esperado,
     }

@@ -4,12 +4,14 @@
 ---------------------------USUARIO-------------------------------
 -----------------------------------------------------------------
 
+CREATE TYPE gender AS ENUM ('MAN', 'WOMAN');
+
 CREATE TYPE user_public AS (
     id INTEGER,
     name VARCHAR,
     email VARCHAR,
     birthday DATE,
-    sex VARCHAR,
+    sex gender,
     icon BYTEA,
     doc VARCHAR
 );
@@ -20,7 +22,7 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(32) NOT NULL,
     birthday DATE NOT NULL,
-    sex VARCHAR(32) NOT NULL,
+    sex gender NOT NULL,
     icon BYTEA,
     user_status BOOLEAN NOT NULL
 );
@@ -42,7 +44,7 @@ CREATE FUNCTION create_user(
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
-    p_sex VARCHAR 
+    p_sex gender
 ) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
@@ -74,7 +76,7 @@ CREATE FUNCTION create_brazilian(
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
-    p_sex VARCHAR,
+    p_sex gender,
     p_cpf VARCHAR
 ) RETURNS SETOF user_public
 LANGUAGE plpgsql
@@ -107,7 +109,7 @@ CREATE FUNCTION create_foreigner(
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
-    p_sex VARCHAR,
+    p_sex gender,
     p_rnm VARCHAR
 ) RETURNS SETOF user_public
 LANGUAGE plpgsql

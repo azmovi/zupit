@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -13,8 +12,6 @@ from zupit.router import drivers, users
 from zupit.schemas import Public
 from zupit.utils import get_user_from_request
 
-T_Session = Annotated[Session, Depends(get_session)]
-
 app = FastAPI()
 
 app.mount('/static', StaticFiles(directory='zupit/static'), name='static')
@@ -27,13 +24,26 @@ app.include_router(drivers.router)
 
 
 @app.get('/', response_class=HTMLResponse)
-def form_seach_travels(request: Request):
-    user = get_user_from_request(request)
-    error = request.session.get('error', None)
+def reset_session():
+    return RedirectResponse(url='/logoff', status_code=HTTPStatus.SEE_OTHER)
+
+
+@app.get('/logoff', response_class=HTMLResponse)
+def logoff(request: Request):
+    request.session.clear()
+    return RedirectResponse(
+        url='/search-travel', status_code=HTTPStatus.SEE_OTHER
+    )
+
+
+@app.get('/search-travel', response_class=HTMLResponse)
+def search_travel(request: Request):
+    user = request.session.get('user')
+    error = request.session.get('error')
     return templates.TemplateResponse(
         request=request,
-        name='index.html',
-        context={'user': user, 'error': error},
+        name='search-travel.html',
+        context={'user': user, 'error': error}
     )
 
 
@@ -54,8 +64,7 @@ def form_sign_in(request: Request):
 
 
 @app.get('/offer', response_class=HTMLResponse)
-def offer(request: Request, session: T_Session):
-    user = get_user_from_request(request)
+def offer(request: Request, session: Session = Depends(get_session)):
     if user := get_user_from_request(request):
         user = Public(**user)
         if driver := drivers.get_driver(user.id, session):
@@ -72,9 +81,3 @@ def offer(request: Request, session: T_Session):
 @app.get('/car', response_class=HTMLResponse)
 def car(request: Request):
     return templates.TemplateResponse('car.html', {'request': request})
-
-
-@app.get('/logoff', response_class=HTMLResponse)
-def logoff(request: Request):
-    request.session.clear()
-    return RedirectResponse(url='/', status_code=HTTPStatus.SEE_OTHER)

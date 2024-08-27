@@ -30,42 +30,13 @@ def session(engine: Engine):
         yield session
 
     with engine.begin() as conn:
-        trucate_db(conn)
-    # drop all
+        conn.execute(text('DROP SCHEMA public CASCADE; CREATE SCHEMA public;'))
 
 
 def init_db(conn: Connection, file_path: str):
     with open(file_path, 'r', encoding='utf-8') as file:
         sql_script = file.read()[11:]
         conn.execute(text(sql_script))
-
-
-def trucate_db(conn: Connection):
-    sql = """
-        SET session_replication_role = 'replica';
-
-        SELECT tablename FROM pg_tables WHERE schemaname = 'schemaname';
-
-        DO $$ DECLARE
-            table_name TEXT;
-        BEGIN
-            FOR table_name IN (
-                SELECT tablename
-                FROM pg_catalog.pg_tables
-                WHERE schemaname = 'schemaname'
-            )
-            LOOP
-
-                EXECUTE 'TRUNCATE TABLE '
-                || quote_ident(table_name)
-                || ' CASCADE;';
-            END LOOP;
-        END $$;
-
-
-        SET session_replication_role = 'origin';
-    """
-    conn.execute(text(sql))
 
 
 @pytest.fixture

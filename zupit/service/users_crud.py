@@ -39,32 +39,28 @@ def get_user_db(
 
 def create_user_db(user: User, session: Session) -> Public:
     if user.nationality.value == 'BRAZILIAN':
-        sql = text(
-            """
-            SELECT * FROM public.create_brazilian(
-                CAST(:name as VARCHAR),
-                CAST(:email as VARCHAR),
-                CAST(:password as VARCHAR),
-                CAST(:birthday as DATE),
-                CAST(:sex as VARCHAR),
-                CAST(:doc as VARCHAR)
-            );
-
-            """
-        )
         doc = user.cpf
-    else:
         sql = text(
-            'SELECT * FROM create_foreigner(:name, :email, :password, '
-            ':birthday, :sex, :doc);'
+            """
+            SELECT * FROM create_brazilian(
+                :name, :email, :password, :birthday, :sex, :doc
+            );
+            """
         )
+    else:
         doc = user.rnm
-
+        sql = text(
+            """
+            SELECT * FROM create_foreigner(
+                :name, :email, :password, :birthday, :sex, :doc
+            );
+            """
+        )
     try:
         user_db = session.execute(
             sql,
             {
-                'name': str(user.name),
+                'name': user.name,
                 'email': user.email,
                 'password': user.password,
                 'birthday': user.birthday,
@@ -72,8 +68,7 @@ def create_user_db(user: User, session: Session) -> Public:
                 'doc': doc,
             },
         ).fetchone()
-    except Exception as e:
-        print(e)
+    except Exception:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
@@ -90,7 +85,7 @@ def create_user_db(user: User, session: Session) -> Public:
         )
     else:
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, detail='User creation failed'
+            status_code=HTTPStatus.BAD_REQUEST, detail='User creation failed'
         )
 
 
