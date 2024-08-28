@@ -29,14 +29,14 @@ class User(BaseModel):
     @classmethod
     def as_form(
         cls,
-        name: str = Form(),
-        email: str = Form(),
-        password: str = Form(),
-        birthday: str = Form(),
-        sex: str = Form(),
-        nationality: str = Form(),
-        cpf: Optional[str] = Form(None),
-        rnm: Optional[str] = Form(None),
+        name: str = Form(...),
+        email: str = Form(...),
+        password: str = Form(...),
+        birthday: str = Form(...),
+        sex: str = Form(...),
+        nationality: str = Form(...),
+        cpf: str = Form(None),
+        rnm: str = Form(None),
     ):
         return cls(
             name=name,
@@ -80,9 +80,6 @@ class Foreigner(BaseModel):
     rnm: str
 
 
-UserPublic = Union[Brazilian, Foreigner, Public]
-
-
 class UserCredentials(BaseModel):
     email: str
     password: str
@@ -98,30 +95,4 @@ class UserCredentials(BaseModel):
             password=password,
         )
 
-
-class Driver(BaseModel):
-    user_id: int
-    cnh: str
-    rating: float
-    preferences: Optional[str] = None
-
-    @classmethod
-    def as_form(
-        cls,
-        user_id: int = Form(),
-        cnh: str = Form(),
-        preferences: str = Form(),
-    ):
-        return cls(
-            user_id=user_id,
-            cnh=cnh,
-            preferences=preferences,
-            rating=0.0,
-        )
-
-
-class DriverPublic(BaseModel):
-    id: int
-    cnh: str
-    rating: float
-    preferences: Optional[str] = None
+UserPublic = Union[Brazilian, Foreigner, Public]

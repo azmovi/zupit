@@ -5,8 +5,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas import Driver, DriverPublic
-from zupit.service.driver_crud import create_driver_db, get_driver_db
+from zupit.schemas.driver import Driver, DriverPublic
+from zupit.service.drivers_crud import create_driver_db, get_driver_db
 
 router = APIRouter(prefix='/drivers', tags=['drivers'])
 
@@ -29,7 +29,7 @@ def create_driver(
     except HTTPException as exc:
         request.session['error'] = exc.detail
         return RedirectResponse(
-            url='/sign-up', status_code=HTTPStatus.SEE_OTHER
+            url='/create-driver', status_code=HTTPStatus.SEE_OTHER
         )
 
 

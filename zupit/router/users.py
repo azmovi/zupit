@@ -5,12 +5,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas import User, UserCredentials, UserPublic
+from zupit.schemas.user import User, UserCredentials, UserPublic
 from zupit.service.users_crud import (
     confirm_user_db,
     create_user_db,
     get_user_db,
 )
+from zupit.service.drivers_crud import get_driver_db
+
 from zupit.utils import serialize_user
 
 router = APIRouter(prefix='/users', tags=['users'])
@@ -82,3 +84,15 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
         )
 
     return db_user
+
+
+def is_driver(
+    request: Request,
+    user_id: int,
+    session: Session = Depends(get_session),
+) -> bool:
+    driver = get_driver_db(user_id, session)
+    if driver:
+        request.session['driver'] = driver
+        return True
+    return False

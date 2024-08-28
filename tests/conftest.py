@@ -10,7 +10,7 @@ from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
 from zupit.database import get_session
-from zupit.schemas import Gender, Nationality, Public, User
+from zupit.schemas.user import Gender, Nationality, Public, User
 from zupit.service.users_crud import create_user_db
 
 

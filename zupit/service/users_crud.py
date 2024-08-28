@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from zupit.schemas import (
+from zupit.schemas.user import (
     Gender,
     Public,
     User,

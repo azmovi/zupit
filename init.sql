@@ -213,7 +213,7 @@ END;
 $$;
 
 -----------------------------------------------------------------
----------------------------Caronista-------------------------------
+---------------------------Caronista-----------------------------
 -----------------------------------------------------------------
 
 CREATE TYPE driver_public AS (
@@ -223,21 +223,14 @@ CREATE TYPE driver_public AS (
     preferences VARCHAR(255)
 );
 
-CREATE TABLE driver(
+
+CREATE TABLE drivers(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     cnh VARCHAR(9) NOT NULL,
     rating FLOAT NOT NULL,
     preferences VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE car(
-    renavam VARCHAR(11) PRIMARY KEY,
-    brand VARCHAR(50),
-    model VARCHAR(50),
-    plate VARCHAR(7),
-    color VARCHAR(7)
 );
 
 
@@ -249,12 +242,12 @@ CREATE FUNCTION create_driver(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO driver (user_id, rating, cnh, preferences)
+    INSERT INTO drivers (user_id, rating, cnh, preferences)
     VALUES (p_user_id, 0, p_cnh, p_preferences);
 
     RETURN QUERY
     SELECT id, cnh, rating, preferences
-    FROM driver
+    FROM drivers
     WHERE user_id = p_user_id
     LIMIT 1;
 END;
@@ -268,8 +261,52 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT id, cnh, rating, preferences
-    FROM driver
+    FROM drivers
     WHERE user_id = p_user_id
     LIMIT 1;
+END;
+$$;
+
+CREATE TABLE cars (
+    renavam VARCHAR(11) PRIMARY KEY,
+    brand VARCHAR(50) NOT NULL,
+    model VARCHAR(50) NOT NULL,
+    plate VARCHAR(7) NOT NULL,
+    color VARCHAR(50) NOT NULL, 
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TYPE car AS (
+    renavam VARCHAR,
+    brand VARCHAR,
+    model VARCHAR,
+    plate VARCHAR,
+    color VARCHAR
+);
+
+CREATE FUNCTION get_car(p_renavam VARCHAR)
+RETURNS SETOF car
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT renavam, brand, model, plate, color
+    FROM cars
+    WHERE renavam = p_renavam
+    LIMIT 1;
+END;
+$$;
+
+
+CREATE FUNCTION get_cars_by_user_id(p_user_id INTEGER)
+RETURNS SETOF car
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT renavam, brand, model, plate, color
+    FROM cars
+    WHERE user_id = p_user_id;
 END;
 $$;
