@@ -1,8 +1,10 @@
-from pydantic import BaseModel
 from fastapi import Form
+from pydantic import BaseModel
+
 
 class Car(BaseModel):
     renavam: str
+    user_id: int
     brand: str
     model: str
     plate: str
@@ -12,6 +14,7 @@ class Car(BaseModel):
     def as_form(
         cls,
         renavam: str = Form(...),
+        user_id: int = Form(...),
         brand: str = Form(...),
         model: str = Form(...),
         plate: str = Form(...),
@@ -19,10 +22,13 @@ class Car(BaseModel):
     ):
         return cls(
             renavam=renavam,
+            user_id=user_id,
             brand=brand,
             model=model,
             plate=plate,
-            color=color
+            color=color,
         )
+
+
 class CarList(BaseModel):
     cars: list[Car]

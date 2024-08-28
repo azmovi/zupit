@@ -2,8 +2,8 @@ import json
 
 from fastapi import Request
 
+from zupit.schemas.driver import Driver
 from zupit.schemas.user import UserPublic
-from zupit.schemas.driver import DriverPublic
 
 
 def serialize_user(user: UserPublic):
@@ -13,8 +13,11 @@ def serialize_user(user: UserPublic):
     return json.dumps(user_serialize)
 
 
-def serialize_driver(driver: DriverPublic):
-    pass
+def serialize_driver(driver: Driver):
+    dict_driver = dict(driver)
+    if dict_driver['rating'] == 0.0:
+        dict_driver['rating'] = 0
+    return json.dumps(dict_driver)
 
 
 def get_user_from_request(request: Request):

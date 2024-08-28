@@ -23,6 +23,7 @@ def get_user_db(
         sql = text('SELECT * FROM get_user_by_email(:campo);')
 
     user_db = session.execute(sql, {'campo': campo}).fetchone()
+    session.commit()
 
     if user_db:
         return Public(
@@ -68,11 +69,11 @@ def create_user_db(user: User, session: Session) -> Public:
                 'doc': doc,
             },
         ).fetchone()
+        session.commit()
     except Exception:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
-
     if user_db:
         return Public(
             id=user_db[0],
@@ -95,6 +96,7 @@ def confirm_user_db(user: UserCredentials, session: Session) -> Public:
         user_db = session.execute(
             sql, {'email': user.email, 'password': user.password}
         ).fetchone()
+        session.commit()
     except Exception:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'

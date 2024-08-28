@@ -95,4 +95,5 @@ class UserCredentials(BaseModel):
             password=password,
         )
 
+
 UserPublic = Union[Brazilian, Foreigner, Public]

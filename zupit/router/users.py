@@ -6,14 +6,13 @@ from sqlalchemy.orm import Session
 
 from zupit.database import get_session
 from zupit.schemas.user import User, UserCredentials, UserPublic
+from zupit.service.drivers_crud import get_driver_db
 from zupit.service.users_crud import (
     confirm_user_db,
     create_user_db,
     get_user_db,
 )
-from zupit.service.drivers_crud import get_driver_db
-
-from zupit.utils import serialize_user
+from zupit.utils import serialize_driver, serialize_user
 
 router = APIRouter(prefix='/users', tags=['users'])
 
@@ -93,6 +92,6 @@ def is_driver(
 ) -> bool:
     driver = get_driver_db(user_id, session)
     if driver:
-        request.session['driver'] = driver
+        request.session['driver'] = serialize_driver(driver)
         return True
     return False

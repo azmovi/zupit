@@ -90,7 +90,7 @@ def test_confirm_user_credentials(client, user):
         'name': 'antonio',
         'doc': user.doc,
         'icon': None,
-        'birthday': '2002-07-08',
+        'birthday': '2000-01-01',
         'sex': user.sex.value,
     }
     payload = {

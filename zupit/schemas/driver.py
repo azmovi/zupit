@@ -1,7 +1,8 @@
 from typing import Optional
 
-from pydantic import BaseModel
 from fastapi import Form
+from pydantic import BaseModel
+
 
 class Driver(BaseModel):
     user_id: int
@@ -22,10 +23,3 @@ class Driver(BaseModel):
             preferences=preferences,
             rating=0.0,
         )
-
-
-class DriverPublic(BaseModel):
-    id: int
-    cnh: str
-    rating: float
-    preferences: Optional[str] = None

@@ -5,10 +5,10 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from zupit.schemas.driver import Driver, DriverPublic
+from zupit.schemas.driver import Driver
 
 
-def create_driver_db(driver: Driver, session: Session) -> DriverPublic:
+def create_driver_db(driver: Driver, session: Session) -> Driver:
     sql = text('SELECT * FROM create_driver(:user_id, :cnh, :preferences)')
 
     try:
@@ -20,11 +20,12 @@ def create_driver_db(driver: Driver, session: Session) -> DriverPublic:
                 'preferences': driver.preferences,
             },
         ).fetchone()
+        session.commit()
 
         if driver_db:
-            return DriverPublic(
-                id=driver_db[0],
-                cnh=driver_db[1],
+            return Driver(
+                cnh=driver_db[0],
+                user_id=driver_db[1],
                 rating=driver_db[2],
                 preferences=driver_db[3],
             )
@@ -40,14 +41,15 @@ def create_driver_db(driver: Driver, session: Session) -> DriverPublic:
         )
 
 
-def get_driver_db(user_id: int, session: Session) -> Optional[DriverPublic]:
+def get_driver_db(user_id: int, session: Session) -> Optional[Driver]:
     sql = text('SELECT * FROM get_driver(:user_id);')
     driver_db = session.execute(sql, {'user_id': user_id}).fetchone()
+    session.commit()
 
     if driver_db:
-        return DriverPublic(
-            id=driver_db[0],
-            cnh=driver_db[1],
+        return Driver(
+            cnh=driver_db[0],
+            user_id=driver_db[1],
             rating=driver_db[2],
             preferences=driver_db[3],
         )

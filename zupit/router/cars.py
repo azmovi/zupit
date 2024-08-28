@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from zupit.database import get_session
 from zupit.schemas.car import Car, CarList
-from zupit.service.cars_crud import get_car_db, create_car_db, get_cars_db
+from zupit.service.cars_crud import create_car_db, get_car_db, get_cars_db
+
 router = APIRouter(prefix='/cars', tags=['cars'])
 
 
@@ -29,26 +30,18 @@ def create_car(
             )
 
         car_db = create_car_db(car, session)
-        request.session['car'] = car_db 
-        return RedirectResponse(
-            url='/offer', status_code=HTTPStatus.SEE_OTHER
-        )
+        request.session['car'] = car_db
+        return RedirectResponse(url='/offer', status_code=HTTPStatus.SEE_OTHER)
 
     except HTTPException as exc:
         request.session['error'] = exc.detail
-        return RedirectResponse(
-            url='/car', status_code=HTTPStatus.SEE_OTHER
-        )
+        return RedirectResponse(url='/car', status_code=HTTPStatus.SEE_OTHER)
 
 
-@router.get(
-    '/{user_id}/',
-    response_model=CarList
-)
+@router.get('/{user_id}/', response_model=CarList)
 def get_cars(
     user_id: int, session: Session = Depends(get_session)
 ) -> Optional[CarList]:
-
     if car_list := get_cars_db(user_id, session):
         return car_list
     return None

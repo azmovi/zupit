@@ -9,18 +9,22 @@ from zupit.database import get_session
 from zupit.schemas.car import Car, CarList
 
 
-def get_car_db(renavam: str , session: Session = Depends(get_session)) -> Optional[Car]:
+def get_car_db(
+    renavam: str, session: Session = Depends(get_session)
+) -> Optional[Car]:
     sql = text('SELECT * FROM get_car(:renavam);')
 
     car_db = session.execute(sql, {'renavam': renavam}).fetchone()
+    session.commit()
 
     if car_db:
         return Car(
             renavam=car_db[0],
-            brand=car_db[1],
-            model=car_db[2],
-            plate=car_db[3],
-            color=car_db[4],
+            user_id=car_db[1],
+            brand=car_db[2],
+            model=car_db[3],
+            plate=car_db[4],
+            color=car_db[5],
         )
     return None
 
@@ -40,6 +44,7 @@ def create_car_db(car: Car, session: Session = Depends(get_session)) -> Car:
                 'color': car.color,
             },
         ).fetchone()
+        session.commit()
     except Exception:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
@@ -48,10 +53,11 @@ def create_car_db(car: Car, session: Session = Depends(get_session)) -> Car:
     if car_db:
         return Car(
             renavam=car_db[0],
-            brand=car_db[1],
-            model=car_db[2],
-            plate=car_db[3],
-            color=car_db[4],
+            user_id=car_db[1],
+            brand=car_db[2],
+            model=car_db[3],
+            plate=car_db[4],
+            color=car_db[5],
         )
     else:
         raise HTTPException(
@@ -66,6 +72,7 @@ def get_cars_db(
 
     try:
         cars = session.execute(sql, {'user_id': user_id}).fetchall()
+        session.commit()
     except Exception:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
@@ -74,16 +81,17 @@ def get_cars_db(
     if cars:
         car_list = []
         for car in cars:
-            car = Car(
+            car_exemple = Car(
                 renavam=car[0],
-                brand=car[1],
-                model=car[2],
-                plate=car[3],
-                color=car[4],
+                user_id=car[1],
+                brand=car[2],
+                model=car[3],
+                plate=car[4],
+                color=car[5],
             )
-            car_list.append(car)
+            car_list.append(car_exemple)
 
-        return CarList(cars=car_list) 
+        return CarList(cars=car_list)
     else:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='User not have Cars'

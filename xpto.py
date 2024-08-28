@@ -1,4 +1,5 @@
-import json
+from zupit.schemas.driver import Driver
+from zupit.utils import serialize_driver
 
 payload = {
     'name': 'Antonio',
@@ -11,9 +12,12 @@ payload = {
     'icon': None,
 }
 
+driver = Driver(user_id=1, cnh='123456789', rating=2.1, preferences=None)
+
+print(serialize_driver(driver))
+
+
 # response = requests.post('http://localhost:8000/users', json=payload)
 # print(response.status_code)
 # print(response.headers)
 # print(response.text)
-a = json.dumps(payload)
-print(a)

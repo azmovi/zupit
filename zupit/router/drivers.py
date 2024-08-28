@@ -5,8 +5,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.driver import Driver, DriverPublic
+from zupit.schemas.driver import Driver
 from zupit.service.drivers_crud import create_driver_db, get_driver_db
+from zupit.utils import serialize_driver
 
 router = APIRouter(prefix='/drivers', tags=['drivers'])
 
@@ -23,7 +24,7 @@ def create_driver(
 ) -> RedirectResponse:
     try:
         driver_db = create_driver_db(driver, session)
-        request.session['driver'] = driver_db
+        request.session['driver'] = serialize_driver(driver_db)
         return RedirectResponse(url='/offer', status_code=HTTPStatus.SEE_OTHER)
 
     except HTTPException as exc:
@@ -33,7 +34,7 @@ def create_driver(
         )
 
 
-@router.get('/{user_id}', response_model=DriverPublic)
+@router.get('/{user_id}', response_model=Driver)
 def get_driver(user_id: int, session: Session = Depends(get_session)):
     db_user = get_driver_db(user_id, session)
     if db_user:

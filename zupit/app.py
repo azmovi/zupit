@@ -42,7 +42,7 @@ def search_travel(request: Request):
     return templates.TemplateResponse(
         request=request,
         name='search-travel.html',
-        context={'user': user, 'error': error}
+        context={'user': user, 'error': error},
     )
 
 
@@ -65,7 +65,7 @@ def form_sign_in(request: Request):
 @app.get('/offer', response_class=HTMLResponse)
 def offer(request: Request, session: Session = Depends(get_session)):
     if user := get_user_from_request(request):
-        if users.is_driver(request, user.get(id, None), session):
+        if users.is_driver(request, user['id'], session):
             driver = request.session.get('driver', None)
             return templates.TemplateResponse(
                 'offer.html',
@@ -78,14 +78,15 @@ def offer(request: Request, session: Session = Depends(get_session)):
 
 @app.get('/create-driver', response_class=HTMLResponse)
 def create_driver(request: Request):
-    user = request.session.get('user', None)
     error = request.session.get('error', None)
-
-    return templates.TemplateResponse(
-        request=request,
-        name='create-driver.html',
-        context={'user': user, 'error': error}
-    )
+    if user := request.session.get('user'):
+        print(user)
+        return templates.TemplateResponse(
+            request=request,
+            name='create-driver.html',
+            context={'user': user, 'error': error},
+        )
+    return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
 
 @app.get('/car', response_class=HTMLResponse)

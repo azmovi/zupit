@@ -1,4 +1,4 @@
-from datetime import date
+import json
 from typing import Generator
 
 import pytest
@@ -10,8 +10,7 @@ from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
 from zupit.database import get_session
-from zupit.schemas.user import Gender, Nationality, Public, User
-from zupit.service.users_crud import create_user_db
+from zupit.schemas.user import Public
 
 
 @pytest.fixture(scope='session')
@@ -40,7 +39,7 @@ def init_db(conn: Connection, file_path: str):
 
 
 @pytest.fixture
-def client(session: Session):
+def client(session: Session) -> Generator[TestClient, None, None]:
     def get_session_override():
         return session
 
@@ -52,15 +51,18 @@ def client(session: Session):
 
 
 @pytest.fixture
-def user(session) -> Public:
-    user = User(
-        name='antonio',
-        email='antonio@example.com',
-        password='123',
-        birthday=date(2002, 7, 8),
-        sex=Gender('MAN'),
-        cpf='12345678900',
-        nationality=Nationality('BRAZILIAN'),
-    )
-    user = create_user_db(user, session)
-    return user
+def user(client) -> Public:
+    user = {
+        'name': 'antonio',
+        'email': 'antonio@example.com',
+        'birthday': '2000-01-01',
+        'sex': 'MAN',
+        'icon': None,
+        'password': '123',
+        'nationality': 'BRAZILIAN',
+        'cpf': '12345678900',
+    }
+    response = client.post('/users', data=user)
+    dict_user = json.loads(response.context.get('user', None))
+
+    return Public(**dict_user)
