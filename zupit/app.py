@@ -9,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from zupit.database import get_session
 from zupit.router import drivers, users
+from zupit.utils import get_user_from_request
 
 app = FastAPI()
 
@@ -63,8 +64,8 @@ def form_sign_in(request: Request):
 
 @app.get('/offer', response_class=HTMLResponse)
 def offer(request: Request, session: Session = Depends(get_session)):
-    if user := request.session.get('user', None):
-        if users.is_driver(request, user.id, session):
+    if user := get_user_from_request(request):
+        if users.is_driver(request, user.get(id, None), session):
             driver = request.session.get('driver', None)
             return templates.TemplateResponse(
                 'offer.html',
