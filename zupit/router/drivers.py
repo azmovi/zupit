@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from zupit.database import get_session
 from zupit.schemas.driver import Driver
 from zupit.service.drivers_crud import create_driver_db, get_driver_db
-from zupit.utils import serialize_driver
 
 router = APIRouter(prefix='/drivers', tags=['drivers'])
 
@@ -23,8 +22,8 @@ def create_driver(
     driver: Driver = Depends(Driver.as_form),
 ) -> RedirectResponse:
     try:
-        driver_db = create_driver_db(driver, session)
-        request.session['driver'] = serialize_driver(driver_db)
+        create_driver_db(driver, session)
+        request.session['driver'] = True
         return RedirectResponse(url='/offer', status_code=HTTPStatus.SEE_OTHER)
 
     except HTTPException as exc:

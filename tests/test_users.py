@@ -1,7 +1,8 @@
-import json
+from zupit.router.users import get_user
+from zupit.schemas.user import Public
 
 
-def test_create_brazilian(client):
+def test_create_brazilian(client, session):
     esperado = {
         'name': 'antonio',
         'email': 'antonio@example.com',
@@ -18,15 +19,15 @@ def test_create_brazilian(client):
 
     response = client.post('/users', data=payload)
 
+    id = response.context['request'].session['id']
+    user_db = get_user(id, session)
+    user = Public(**esperado, doc=payload['cpf'], id=id)
+
     assert response.template.name == 'search-travel.html'
-    assert json.loads(response.context['user']) == {
-        'id': 1,
-        **esperado,
-        'doc': payload['cpf'],
-    }
+    assert user_db == user
 
 
-def test_create_foreigner(client):
+def test_create_foreigner(client, session):
     esperado = {
         'name': 'antonio',
         'email': 'antonio@example.com',
@@ -43,12 +44,12 @@ def test_create_foreigner(client):
 
     response = client.post('/users', data=payload)
 
+    id = response.context['request'].session['id']
+    user_db = get_user(id, session)
+    user = Public(**esperado, doc=payload['rnm'], id=id)
+
     assert response.template.name == 'search-travel.html'
-    assert json.loads(response.context['user']) == {
-        'id': 1,
-        'doc': payload['rnm'],
-        **esperado,
-    }
+    assert user_db == user
 
 
 def test_error_create_user_existent(client, user):
@@ -62,8 +63,9 @@ def test_error_create_user_existent(client, user):
         'nationality': 'BRAZILIAN',
     }
     response = client.post('/users', data=payload)
-
-    assert response.context['error'] == 'User already exists'
+    assert response.context['request'].session['error'] == (
+        'User already exists'
+    )
     assert response.template.name == 'sign-up.html'
 
 
@@ -80,30 +82,19 @@ def test_create_user_invalid(client):
 
     response = client.post('/users', data=payload)
 
-    assert response.context['error'] == 'Input invalid'
+    assert response.context['request'].session['error'] == ('Input invalid')
     assert response.template.name == 'sign-up.html'
 
 
 def test_confirm_user_credentials(client, user):
-    esperado = {
-        'id': 1,
-        'name': 'antonio',
-        'doc': user.doc,
-        'icon': None,
-        'birthday': '2000-01-01',
-        'sex': user.sex.value,
-    }
     payload = {
         'email': user.email,
         'password': '123',
     }
     response = client.post('/users/confirm-user', data=payload)
 
+    assert response.context['request'].session['id'] == user.id
     assert response.template.name == 'search-travel.html'
-    assert json.loads(response.context['user']) == {
-        'email': user.email,
-        **esperado,
-    }
 
 
 def test_wrong_emai_user_credentials(client, user):
@@ -113,7 +104,7 @@ def test_wrong_emai_user_credentials(client, user):
     }
     response = client.post('/users/confirm-user', data=payload)
 
-    assert response.context['error'] == 'User not found'
+    assert response.context['request'].session['error'] == ('User not found')
     assert response.template.name == 'sign-in.html'
 
 
@@ -125,5 +116,5 @@ def test_wrong_password_user_credentials(client, user):
 
     response = client.post('/users/confirm-user', data=payload)
 
-    assert response.context['error'] == 'User not found'
+    assert response.context['request'].session['error'] == ('User not found')
     assert response.template.name == 'sign-in.html'

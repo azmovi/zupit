@@ -12,7 +12,6 @@ from zupit.service.users_crud import (
     create_user_db,
     get_user_db,
 )
-from zupit.utils import serialize_driver, serialize_user
 
 router = APIRouter(prefix='/users', tags=['users'])
 
@@ -34,8 +33,8 @@ def create_user(
                 status_code=HTTPStatus.CONFLICT, detail='User already exists'
             )
 
-        db_user = create_user_db(user, session)
-        request.session['user'] = serialize_user(db_user)
+        id = create_user_db(user, session)
+        request.session['id'] = id
         return RedirectResponse(
             url='/search-travel', status_code=HTTPStatus.SEE_OTHER
         )
@@ -57,8 +56,8 @@ def confirm_user(
     user: UserCredentials = Depends(UserCredentials.as_form),
 ) -> RedirectResponse:
     try:
-        db_user = confirm_user_db(user, session)
-        request.session['user'] = serialize_user(db_user)
+        id = confirm_user_db(user, session)
+        request.session['id'] = id
         return RedirectResponse(
             url='/search-travel', status_code=HTTPStatus.SEE_OTHER
         )
@@ -86,12 +85,9 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
 
 
 def is_driver(
-    request: Request,
     user_id: int,
     session: Session = Depends(get_session),
 ) -> bool:
-    driver = get_driver_db(user_id, session)
-    if driver:
-        request.session['driver'] = serialize_driver(driver)
+    if get_driver_db(user_id, session):
         return True
     return False

@@ -8,36 +8,24 @@ from sqlalchemy.orm import Session
 from zupit.schemas.driver import Driver
 
 
-def create_driver_db(driver: Driver, session: Session) -> Driver:
+def create_driver_db(driver: Driver, session: Session):
     sql = text('SELECT * FROM create_driver(:user_id, :cnh, :preferences)')
 
     try:
-        driver_db = session.execute(
+        session.execute(
             sql,
             {
                 'user_id': driver.user_id,
                 'cnh': driver.cnh,
                 'preferences': driver.preferences,
             },
-        ).fetchone()
+        )
         session.commit()
-
-        if driver_db:
-            return Driver(
-                cnh=driver_db[0],
-                user_id=driver_db[1],
-                rating=driver_db[2],
-                preferences=driver_db[3],
-            )
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail='Driver already in database',
-            )
 
     except Exception:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Driver already in database',
         )
 
 

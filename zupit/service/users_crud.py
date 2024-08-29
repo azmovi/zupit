@@ -14,31 +14,7 @@ from zupit.schemas.user import (
 )
 
 
-def get_user_db(
-    campo: Union[str, int], session: Session
-) -> Optional[UserPublic]:
-    if isinstance(campo, int):
-        sql = text('SELECT * FROM get_user_by_id(:campo);')
-    elif isinstance(campo, str):
-        sql = text('SELECT * FROM get_user_by_email(:campo);')
-
-    user_db = session.execute(sql, {'campo': campo}).fetchone()
-    session.commit()
-
-    if user_db:
-        return Public(
-            id=user_db[0],
-            name=user_db[1],
-            email=user_db[2],
-            birthday=user_db[3],
-            sex=Gender(user_db[4]),
-            icon=user_db[5],
-            doc=user_db[6],
-        )
-    return None
-
-
-def create_user_db(user: User, session: Session) -> Public:
+def create_user_db(user: User, session: Session) -> int:
     if user.nationality.value == 'BRAZILIAN':
         doc = user.cpf
         sql = text(
@@ -58,7 +34,7 @@ def create_user_db(user: User, session: Session) -> Public:
             """
         )
     try:
-        user_db = session.execute(
+        result = session.execute(
             sql,
             {
                 'name': user.name,
@@ -74,6 +50,28 @@ def create_user_db(user: User, session: Session) -> Public:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
+    if result:
+        return result[0]  # id
+
+    else:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='User creation failed'
+        )
+
+
+def get_user_db(
+    campo: Union[str, int], session: Session
+) -> Optional[UserPublic]:
+    if isinstance(campo, int):
+        sql = text('SELECT * FROM get_user_by_id(:campo);')
+    elif isinstance(campo, str):
+        sql = text('SELECT * FROM get_user_by_email(:campo);')
+
+    result = session.execute(sql, {'campo': campo})
+    user_db = result.fetchone()
+
+    session.commit()
+
     if user_db:
         return Public(
             id=user_db[0],
@@ -84,13 +82,10 @@ def create_user_db(user: User, session: Session) -> Public:
             icon=user_db[5],
             doc=user_db[6],
         )
-    else:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='User creation failed'
-        )
+    return None
 
 
-def confirm_user_db(user: UserCredentials, session: Session) -> Public:
+def confirm_user_db(user: UserCredentials, session: Session) -> int:
     sql = text('SELECT * FROM confirm_user(:email, :password);')
     try:
         user_db = session.execute(
@@ -103,15 +98,7 @@ def confirm_user_db(user: UserCredentials, session: Session) -> Public:
         )
 
     if user_db:
-        return Public(
-            id=user_db[0],
-            name=user_db[1],
-            email=user_db[2],
-            birthday=user_db[3],
-            sex=Gender(user_db[4]),
-            icon=user_db[5],
-            doc=user_db[6],
-        )
+        return user_db[0]  # id do user
     else:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED, detail='Invalid credentials'

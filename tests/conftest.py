@@ -1,4 +1,3 @@
-import json
 from typing import Generator
 
 import pytest
@@ -10,7 +9,10 @@ from testcontainers.postgres import PostgresContainer
 
 from zupit.app import app
 from zupit.database import get_session
-from zupit.schemas.user import Public
+from zupit.router.drivers import get_driver
+from zupit.router.users import get_user
+from zupit.schemas.driver import Driver
+from zupit.schemas.user import UserPublic
 
 
 @pytest.fixture(scope='session')
@@ -51,18 +53,25 @@ def client(session: Session) -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture
-def user(client) -> Public:
+def user(client, session) -> UserPublic:
     user = {
         'name': 'antonio',
         'email': 'antonio@example.com',
         'birthday': '2000-01-01',
         'sex': 'MAN',
-        'icon': None,
         'password': '123',
         'nationality': 'BRAZILIAN',
         'cpf': '12345678900',
     }
-    response = client.post('/users', data=user)
-    dict_user = json.loads(response.context.get('user', None))
 
-    return Public(**dict_user)
+    response = client.post('/users', data=user)
+    id = response.context['request'].session['id']
+    return get_user(id, session)
+
+
+@pytest.fixture
+def driver(client, user, session) -> Driver:
+    driver = {'user_id': user.id, 'cnh': '123456789', 'preferences': 'xpto'}
+
+    client.post('/drivers', data=driver)
+    return get_driver(user.id, session)

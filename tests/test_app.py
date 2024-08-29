@@ -1,6 +1,13 @@
 from http import HTTPStatus
 
 
+def test_reset_session(client):
+    response = client.get('/')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'search-travel.html'
+
+
 def test_search_travel_html(client):
     response = client.get('/search-travel')
 
@@ -27,3 +34,26 @@ def test_logoff_user(client):
 
     assert response.status_code == HTTPStatus.OK
     assert response.template.name == 'search-travel.html'
+
+
+def test_driver_html(client, user):
+    response = client.get('/create-driver')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'create-driver.html'
+    assert response.context['request'].session['id'] == user.id
+
+
+def test_driver_html_without_user(client):
+    response = client.get('/create-driver')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'sign-in.html'
+
+
+def test_offer_html_with_driver(client, driver):
+    response = client.get('/offer')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'offer.html'
+    assert response.context['request'].session['driver']

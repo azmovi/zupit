@@ -1,6 +1,3 @@
-import json
-
-
 def test_create_driver_without_preferences(client, user):
     esperado = {
         'cnh': '123456789',
@@ -15,9 +12,7 @@ def test_create_driver_without_preferences(client, user):
     response = client.post('/drivers', data=payload)
 
     assert response.template.name == 'offer.html'
-    assert json.loads(response.context['driver']) == (
-        esperado | {'rating': 0, 'user_id': user.id}
-    )
+    assert response.context['request'].session['id'] == user.id
 
 
 def test_create_driver_with_preferences(client, user):
@@ -34,9 +29,7 @@ def test_create_driver_with_preferences(client, user):
     response = client.post('/drivers', data=payload)
 
     assert response.template.name == 'offer.html'
-    assert json.loads(response.context['driver']) == (
-        esperado | {'rating': 0, 'user_id': user.id}
-    )
+    assert response.context['request'].session['id'] == user.id
 
 
 # def test_create_foreigner(client):
