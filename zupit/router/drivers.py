@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.driver import Driver
+from zupit.schemas.drivers import Driver
 from zupit.service.drivers_crud import create_driver_db, get_driver_db
 
 router = APIRouter(prefix='/drivers', tags=['drivers'])
@@ -38,6 +38,4 @@ def get_driver(user_id: int, session: Session = Depends(get_session)):
     db_user = get_driver_db(user_id, session)
     if db_user:
         return db_user
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND, detail='Driver not found'
-    )
+    return None

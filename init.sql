@@ -267,6 +267,23 @@ CREATE TABLE cars (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE FUNCTION create_car(
+    p_renavam VARCHAR(11),
+    p_user_id INTEGER,
+    p_brand VARCHAR(50),
+    p_model VARCHAR(50),
+    p_plate VARCHAR(7),
+    p_color VARCHAR(50)
+)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO cars (renavam, user_id, brand, model, plate, color)
+    VALUES (p_renavam, p_user_id, p_brand, p_model, p_plate, p_color);
+END;
+$$;
+
 
 CREATE FUNCTION get_car_by_renavam(p_renavam VARCHAR)
 RETURNS SETOF cars
@@ -302,13 +319,15 @@ $$;
 
 CREATE TABLE trips(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(32) NOT NULL,
-    birthday DATE NOT NULL,
-    sex gender NOT NULL,
-    icon BYTEA,
-    user_status BOOLEAN NOT NULL
+    date_start DATE NOT NULL,
+    time_start TIMESTAMP NOT NULL,
+    space INTEGER NOT NULL,
+    status BOOLEAN NOT NULL,
+    value BOOLEAN NOT NULL,
+    id_start_address INTEGER NOT NULL,
+    id_end_address INTEGER NOT NULL,
+    id_caronista INTEGER NOT NULL,
+    id_carro INTEGER NOT NULL
 );
 
 
@@ -320,17 +339,7 @@ CREATE TABLE address (
     city VARCHAR(50) not NULL,
     state VARCHAR(2) not NULL,
     house_number VARCHAR(50) not NULL,
-    district VARCHAR(50) not NULL,
-    
-    id_caronista NOT NULL,
-    id_carro INTEGER NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(32) NOT NULL,
-    birthday DATE NOT NULL,
-    sex gender NOT NULL,
-    icon BYTEA,
-    user_status BOOLEAN NOT NULL
+    district VARCHAR(50) not NULL
 );
 
 

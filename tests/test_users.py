@@ -1,8 +1,8 @@
 from zupit.router.users import get_user
-from zupit.schemas.user import Public
+from zupit.schemas.users import Public
 
 
-def test_create_brazilian(client, session):
+def test_create_brazilian(client):
     esperado = {
         'name': 'antonio',
         'email': 'antonio@example.com',

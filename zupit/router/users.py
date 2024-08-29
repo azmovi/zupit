@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.user import User, UserCredentials, UserPublic
+from zupit.schemas.users import User, UserCredentials, UserPublic
 from zupit.service.drivers_crud import get_driver_db
 from zupit.service.users_crud import (
     confirm_user_db,
@@ -16,9 +16,9 @@ from zupit.service.users_crud import (
 
 router = APIRouter(prefix='/users', tags=['users'])
 
-FUser = Annotated[User, Depends(User.as_form)]
-CUser = Annotated[UserCredentials, Depends(UserCredentials.as_form)]
 Session = Annotated[Session, Depends(get_session)]
+User = Annotated[User, Depends(User.as_form)]
+UserCredentials = Annotated[UserCredentials, Depends(UserCredentials.as_form)]
 
 
 @router.post(
@@ -29,7 +29,7 @@ Session = Annotated[Session, Depends(get_session)]
 def create_user(
     request: Request,
     session: Session,
-    user: FUser,
+    user: User,
 ):
     try:
         db_user = get_user_db(user.email, session)
@@ -58,7 +58,7 @@ def create_user(
 def confirm_user(
     request: Request,
     session: Session,
-    user: CUser,
+    user: UserCredentials,
 ) -> RedirectResponse:
     try:
         id = confirm_user_db(user, session)
@@ -74,15 +74,16 @@ def confirm_user(
         )
 
 
+@router.get(
+    '/{user_id}',
+    response_class=HTMLResponse,
+)
 def get_user(user_id: int, session: Session) -> Optional[UserPublic]:
     db_user = get_user_db(user_id, session)
 
     if db_user := get_user_db(user_id, session):
         return db_user
-
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-    )
+    return None
 
 
 def is_driver(user_id: int, session: Session) -> bool:

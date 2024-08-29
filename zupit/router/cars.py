@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.car import Car, CarList
+from zupit.schemas.cars import Car, CarList
 from zupit.service.cars_crud import create_car_db, get_car_db, get_cars_db
 
 router = APIRouter(prefix='/cars', tags=['cars'])
@@ -23,17 +23,17 @@ def create_car(
     car: Car = Depends(Car.as_form),
 ):
     try:
-        db_car = get_car_db(car.renavam, session)
-        if db_car:
+        result = get_car_db(car.renavam, session)
+        if result:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='Car already exists'
             )
 
-        car_db = create_car_db(car, session)
-        request.session['car'] = car_db
+        create_car_db(car, session)
         return RedirectResponse(url='/offer', status_code=HTTPStatus.SEE_OTHER)
 
     except HTTPException as exc:
+        print('ddue merda')
         request.session['error'] = exc.detail
         return RedirectResponse(url='/car', status_code=HTTPStatus.SEE_OTHER)
 

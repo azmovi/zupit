@@ -16,6 +16,8 @@
         {% include 'navbar.html' %}
         <h1>Cadastro do Carro</h1>
         <form method="POST" action="/cars">
+            <input type="hidden" id="user_id" name="user_id" value="{{ user.id }}"/>
+
             <input type="text" id="renavam" placeholder="RENAVAM" name="renavam" required><br><br>
     
             <input type="text" id="brand" placeholder="Marca" name="brand" required><br><br>

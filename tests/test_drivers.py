@@ -1,4 +1,4 @@
-from zupit.schemas.driver import Driver
+from zupit.schemas.drivers import Driver
 
 
 def test_create_driver_without_preferences(client, user):
@@ -17,7 +17,7 @@ def test_create_driver_without_preferences(client, user):
     driver = Driver(user_id=user.id, rating=0, **esperado)
 
     assert driver == driver_db
-    assert response.template.name == 'offer.html'
+    assert response.template.name == 'offer/first.html'
 
 
 def test_create_driver_with_preferences(client, user):
@@ -37,7 +37,7 @@ def test_create_driver_with_preferences(client, user):
     driver = Driver(user_id=user.id, rating=0, **esperado)
 
     assert driver == driver_db
-    assert response.template.name == 'offer.html'
+    assert response.template.name == 'offer/first.html'
 
 
 # TODO Create invalid Driver

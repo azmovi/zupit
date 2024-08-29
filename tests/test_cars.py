@@ -1,28 +1,26 @@
-# import json
-#
-#
-# def test_create_car(client, user):
-#     esperado = {
-#         'renavam': '12345678900',
-#         'brand': 'fiat',
-#         'model': 'mobi',
-#         'plate': 'fjr5231',
-#         'color': 'vermelho',
-#     }
-#
-#     payload = {
-#         **esperado,
-#         'user_id': f'{user.id}',
-#     }
-#
-#     response = client.post('/drivers', data=payload)
-#
-#     assert response.template.name == 'offer.html'
-#     assert json.loads(response.context['driver']) == (
-#         esperado | {'rating': '0.0', 'user_id': user.id}
-#     )
-#
-#
+from zupit.schemas.cars import Car
+
+
+def test_create_car(client, user, driver):
+    payload = {
+        'renavam': '12345678900',
+        'user_id': user.id,
+        'brand': 'fiat',
+        'model': 'mobi',
+        'plate': 'fjr5231',
+        'color': 'vermelho',
+    }
+
+    response = client.post('/cars', data=payload)
+    assert response.template.name == 'offer/first.html'
+
+
+def test_list_car_of_user(client, user, car1, car2):
+    response = client.get(f"/cars/{user.id}")
+    cars = [Car.model_validate(car).model_dump() for car in [car1, car2]]
+    assert response.json() == {'cars': cars}
+
+
 # def test_create_driver_with_preferences(client, user):
 #     esperado = {
 #         'cnh': '123456789',

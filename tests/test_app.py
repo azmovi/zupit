@@ -55,5 +55,5 @@ def test_offer_html_with_driver(client, driver):
     response = client.get('/offer')
 
     assert response.status_code == HTTPStatus.OK
-    assert response.template.name == 'offer.html'
-    assert response.context['request'].session['driver']
+    assert response.template.name == 'offer/first.html'
+    assert response.context['driver']

@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from zupit.schemas.driver import Driver
+from zupit.schemas.drivers import Driver
 
 
 def create_driver_db(driver: Driver, session: Session):

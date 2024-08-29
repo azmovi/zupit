@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Optional
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,8 +10,9 @@ from testcontainers.postgres import PostgresContainer
 from zupit.app import app
 from zupit.database import get_session
 from zupit.router.drivers import get_driver
-from zupit.schemas.driver import Driver
-from zupit.schemas.user import Public
+from zupit.schemas.cars import Car
+from zupit.schemas.drivers import Driver
+from zupit.schemas.users import Public
 
 
 @pytest.fixture(scope='session')
@@ -68,8 +69,38 @@ def user(client) -> Public:
 
 
 @pytest.fixture
-def driver(client, user, session) -> Driver:
+def driver(client, user, session) -> Optional[Driver]:
     driver = {'user_id': user.id, 'cnh': '123456789', 'preferences': 'xpto'}
 
     client.post('/drivers', data=driver)
     return get_driver(user.id, session)
+
+
+@pytest.fixture
+def car1(client, user) -> Car:
+    car = {
+        'renavam': '12345678900',
+        'user_id': user.id,
+        'brand': 'fiat',
+        'model': 'mobi',
+        'plate': 'fjr5231',
+        'color': 'vermelho',
+    }
+
+    client.post('/cars', data=car)
+    return Car(**car)
+
+
+@pytest.fixture
+def car2(client, user) -> Car:
+    car = {
+        'renavam': '12345671920',
+        'user_id': user.id,
+        'brand': 'fiat',
+        'model': 'argo',
+        'plate': 'fsp9132',
+        'color': 'azul',
+    }
+
+    client.post('/cars', data=car)
+    return Car(**car)

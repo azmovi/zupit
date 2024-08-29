@@ -5,13 +5,15 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from zupit.schemas.user import (
+from zupit.schemas.users import (
     Gender,
     Public,
     User,
     UserCredentials,
     UserPublic,
 )
+
+# Session = Annotated[Session, Depends(get_session)]
 
 
 def create_user_db(user: User, session: Session) -> int:

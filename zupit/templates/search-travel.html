@@ -24,8 +24,7 @@
         <button class="button2" type="submit">
             Pesquisar
         </button>
-        <h1>{{ user.id }}</h1>
-        {% if not request['session']['id'] %}
+        {% if not user.id %}
             <div class="space-between">
                 <a class="button1" href="/sign-in">Entrar na conta</a>
                 <a class="button1" href="/sign-up">Cadastre-se</a>

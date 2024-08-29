@@ -20,3 +20,24 @@ function buscarEndereco(cep, destino) {
     }
 }
 
+function fetchCars(user_id) {
+    fetch(`/cars/${user_id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar a lista de carros');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.cars) {
+                const selectCar = document.getElementById('car');
+                data.cars.forEach(car => {
+                    const option = document.createElement('option');
+                    option.value = car.renavam;
+                    option.textContent = `${car.brand} ${car.model} - ${car.plate} (${car.color})`;
+                    selectCar.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Erro ao carregar carros:', error));
+}
