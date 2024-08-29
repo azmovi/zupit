@@ -42,9 +42,7 @@ def search_travel(
     request: Request, user: Optional[UserPublic] = Depends(get_current_user)
 ):
     return templates.TemplateResponse(
-        request=request,
-        name='search-travel.html',
-        context={'user': user}
+        request=request, name='search-travel.html', context={'user': user}
     )
 
 
@@ -63,7 +61,8 @@ def offer(request: Request, session: Session = Depends(get_session)):
     if id := request.session.get('id', None):
         if users.is_driver(int(id), session):
             return templates.TemplateResponse(
-                request=request, name='offer.html',
+                request=request,
+                name='offer.html',
             )
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER

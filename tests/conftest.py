@@ -10,9 +10,8 @@ from testcontainers.postgres import PostgresContainer
 from zupit.app import app
 from zupit.database import get_session
 from zupit.router.drivers import get_driver
-from zupit.router.users import get_user
 from zupit.schemas.driver import Driver
-from zupit.schemas.user import UserPublic
+from zupit.schemas.user import Public
 
 
 @pytest.fixture(scope='session')
@@ -53,7 +52,7 @@ def client(session: Session) -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture
-def user(client, session) -> UserPublic:
+def user(client) -> Public:
     user = {
         'name': 'antonio',
         'email': 'antonio@example.com',
@@ -65,8 +64,7 @@ def user(client, session) -> UserPublic:
     }
 
     response = client.post('/users', data=user)
-    id = response.context['request'].session['id']
-    return get_user(id, session)
+    return response.context['user']
 
 
 @pytest.fixture

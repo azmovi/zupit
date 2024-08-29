@@ -29,6 +29,7 @@ def test_create_driver_with_preferences(client, user):
     response = client.post('/drivers', data=payload)
 
     assert response.template.name == 'offer.html'
+    print(response.context)
     assert response.context['request'].session['id'] == user.id
 
 
