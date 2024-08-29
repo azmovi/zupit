@@ -19,9 +19,8 @@ def test_create_brazilian(client, session):
 
     response = client.post('/users', data=payload)
 
-    id = response.context['request'].session['id']
-    user_db = get_user(id, session)
-    user = Public(**esperado, doc=payload['cpf'], id=id)
+    user_db = response.context['user']
+    user = Public(**esperado, doc=payload['cpf'], id=user_db.id)
 
     assert response.template.name == 'search-travel.html'
     assert user_db == user

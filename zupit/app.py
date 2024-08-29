@@ -1,17 +1,16 @@
 from http import HTTPStatus
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from zupit.database import get_session
 from zupit.router import drivers, users
+from zupit.schemas.driver import Driver
 from zupit.schemas.user import UserPublic
-from zupit.utils import get_current_user
+from zupit.utils import get_current_driver, get_current_user
 
 app = FastAPI()
 
@@ -22,6 +21,9 @@ app.add_middleware(SessionMiddleware, secret_key='secret_key')
 
 app.include_router(users.router)
 app.include_router(drivers.router)
+
+TUser = Annotated[Optional[UserPublic], Depends(get_current_user)]
+TDriver = Annotated[Optional[Driver], Depends(get_current_driver)]
 
 
 @app.get('/', response_class=HTMLResponse)
@@ -38,9 +40,7 @@ def logoff(request: Request):
 
 
 @app.get('/search-travel', response_class=HTMLResponse)
-def search_travel(
-    request: Request, user: Optional[UserPublic] = Depends(get_current_user)
-):
+def search_travel(request: Request, user: TUser):
     return templates.TemplateResponse(
         request=request, name='search-travel.html', context={'user': user}
     )
@@ -57,24 +57,23 @@ def form_sign_in(request: Request):
 
 
 @app.get('/offer', response_class=HTMLResponse)
-def offer(request: Request, session: Session = Depends(get_session)):
-    if id := request.session.get('id', None):
-        if users.is_driver(int(id), session):
-            return templates.TemplateResponse(
-                request=request,
-                name='offer.html',
-            )
+def offer(request: Request, user: TUser, driver: TDriver):
+    if driver:
+        return templates.TemplateResponse(
+            request=request,
+            name='offer.html',
+            context={'user': user, 'driver': driver},
+        )
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER
     )
 
 
 @app.get('/create-driver', response_class=HTMLResponse)
-def create_driver(request: Request):
-    if request.session.get('id', None):
+def create_driver(request: Request, user: TUser):
+    if user:
         return templates.TemplateResponse(
-            request=request,
-            name='create-driver.html',
+            request=request, name='create-driver.html', context={'user': user}
         )
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 

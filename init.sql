@@ -293,3 +293,44 @@ BEGIN
     WHERE user_id = p_user_id;
 END;
 $$;
+
+
+-----------------------------------------------------------------
+---------------------------VIAGEM-------------------------------
+-----------------------------------------------------------------
+
+
+CREATE TABLE trips(
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(32) NOT NULL,
+    birthday DATE NOT NULL,
+    sex gender NOT NULL,
+    icon BYTEA,
+    user_status BOOLEAN NOT NULL
+);
+
+
+CREATE TABLE address (
+    id SERIAL PRIMARY KEY,
+    cep VARCHAR(8) NOT NULL,
+    street VARCHAR(50) NOT NULL,
+    complement VARCHAR(50) NOT NULL,
+    city VARCHAR(50) not NULL,
+    state VARCHAR(2) not NULL,
+    house_number VARCHAR(50) not NULL,
+    district VARCHAR(50) not NULL,
+    
+    id_caronista NOT NULL,
+    id_carro INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(32) NOT NULL,
+    birthday DATE NOT NULL,
+    sex gender NOT NULL,
+    icon BYTEA,
+    user_status BOOLEAN NOT NULL
+);
+
+

@@ -28,7 +28,7 @@ def create_user_db(user: User, session: Session) -> int:
         doc = user.rnm
         sql = text(
             """
-            SELECT * FROM create_foreigner(
+            SELECT id FROM create_foreigner(
                 :name, :email, :password, :birthday, :sex, :doc
             );
             """
@@ -86,7 +86,7 @@ def get_user_db(
 
 
 def confirm_user_db(user: UserCredentials, session: Session) -> int:
-    sql = text('SELECT * FROM confirm_user(:email, :password);')
+    sql = text('SELECT id FROM confirm_user(:email, :password);')
     try:
         user_db = session.execute(
             sql, {'email': user.email, 'password': user.password}

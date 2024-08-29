@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -15,6 +16,10 @@ from zupit.service.users_crud import (
 
 router = APIRouter(prefix='/users', tags=['users'])
 
+FUser = Annotated[User, Depends(User.as_form)]
+CUser = Annotated[UserCredentials, Depends(UserCredentials.as_form)]
+Session = Annotated[Session, Depends(get_session)]
+
 
 @router.post(
     '/',
@@ -23,8 +28,8 @@ router = APIRouter(prefix='/users', tags=['users'])
 )
 def create_user(
     request: Request,
-    session: Session = Depends(get_session),
-    user: User = Depends(User.as_form),
+    session: Session,
+    user: FUser,
 ):
     try:
         db_user = get_user_db(user.email, session)
@@ -52,8 +57,8 @@ def create_user(
 )
 def confirm_user(
     request: Request,
-    session: Session = Depends(get_session),
-    user: UserCredentials = Depends(UserCredentials.as_form),
+    session: Session,
+    user: CUser,
 ) -> RedirectResponse:
     try:
         id = confirm_user_db(user, session)
@@ -69,25 +74,18 @@ def confirm_user(
         )
 
 
-@router.get(
-    '/{user_id}',
-    response_model=UserPublic,
-)
-def get_user(user_id: int, session: Session = Depends(get_session)):
+def get_user(user_id: int, session: Session) -> Optional[UserPublic]:
     db_user = get_user_db(user_id, session)
 
-    if db_user is None:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-        )
+    if db_user := get_user_db(user_id, session):
+        return db_user
 
-    return db_user
+    raise HTTPException(
+        status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+    )
 
 
-def is_driver(
-    user_id: int,
-    session: Session = Depends(get_session),
-) -> bool:
+def is_driver(user_id: int, session: Session) -> bool:
     if get_driver_db(user_id, session):
         return True
     return False
