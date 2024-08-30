@@ -13,8 +13,6 @@ from zupit.schemas.users import (
     UserPublic,
 )
 
-# Session = Annotated[Session, Depends(get_session)]
-
 
 def create_user_db(user: User, session: Session) -> int:
     if user.nationality.value == 'BRAZILIAN':

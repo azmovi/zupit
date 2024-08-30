@@ -62,10 +62,12 @@ def test_error_create_user_existent(client, user):
         'nationality': 'BRAZILIAN',
     }
     response = client.post('/users', data=payload)
-    assert response.context['request'].session['error'] == (
-        'User already exists'
-    )
+
+    request = response.context.get('request', None)
+    error = request.session.get('error', None)
+
     assert response.template.name == 'sign-up.html'
+    assert error == 'User already exists'
 
 
 def test_create_user_invalid(client):
@@ -81,7 +83,10 @@ def test_create_user_invalid(client):
 
     response = client.post('/users', data=payload)
 
-    assert response.context['request'].session['error'] == ('Input invalid')
+    request = response.context.get('request', None)
+    error = request.session.get('error', None)
+
+    assert error == 'Input invalid'
     assert response.template.name == 'sign-up.html'
 
 
@@ -90,9 +95,11 @@ def test_confirm_user_credentials(client, user):
         'email': user.email,
         'password': '123',
     }
-    response = client.post('/users/confirm-user', data=payload)
 
-    assert response.context['request'].session['id'] == user.id
+    response = client.post('/users/confirm-user', data=payload)
+    user_db = response.context.get('user', None)
+
+    assert user_db == user
     assert response.template.name == 'search-travel.html'
 
 
@@ -103,7 +110,10 @@ def test_wrong_emai_user_credentials(client, user):
     }
     response = client.post('/users/confirm-user', data=payload)
 
-    assert response.context['request'].session['error'] == ('User not found')
+    request = response.context.get('request', None)
+    error = request.session.get('error', None)
+
+    assert error == 'User not found'
     assert response.template.name == 'sign-in.html'
 
 
@@ -115,5 +125,14 @@ def test_wrong_password_user_credentials(client, user):
 
     response = client.post('/users/confirm-user', data=payload)
 
-    assert response.context['request'].session['error'] == ('User not found')
+    request = response.context.get('request', None)
+    error = request.session.get('error', None)
+
+    assert error == 'User not found'
     assert response.template.name == 'sign-in.html'
+
+
+# def test_get_user_from_db(client, user):
+#     response = client.get(f'users/{user.id}')
+#     user_json = Public.model_validate(user).model_dump()
+#     return response, user_json

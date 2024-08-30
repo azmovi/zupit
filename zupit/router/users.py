@@ -28,12 +28,12 @@ UserCredentials = Annotated[UserCredentials, Depends(UserCredentials.as_form)]
 )
 def create_user(
     request: Request,
-    session: Session,
-    user: User,
+    session: Session,  # type: ignore
+    user: User,  # type: ignore
 ):
     try:
-        db_user = get_user_db(user.email, session)
-        if db_user:
+        user_db = get_user_db(user.email, session)
+        if user_db:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='User already exists'
             )
@@ -78,9 +78,10 @@ def confirm_user(
     '/{user_id}',
     response_class=HTMLResponse,
 )
-def get_user(user_id: int, session: Session) -> Optional[UserPublic]:
-    db_user = get_user_db(user_id, session)
-
+def get_user(
+    user_id: int,
+    session: Session,  # type: ignore
+) -> Optional[UserPublic]:
     if db_user := get_user_db(user_id, session):
         return db_user
     return None

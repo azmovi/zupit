@@ -56,4 +56,42 @@ def test_offer_html_with_driver(client, driver):
 
     assert response.status_code == HTTPStatus.OK
     assert response.template.name == 'offer/first.html'
-    assert response.context['driver']
+    assert response.context['driver'] == driver
+
+
+def test_offer_html_without_driver(client, user):
+    response = client.get('/offer')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'create-driver.html'
+    assert response.context['user'] == user
+
+
+def test_offer_html_without_user(client):
+    response = client.get('/offer')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'sign-in.html'
+
+
+def test_car_html(client, driver):
+    response = client.get('/car')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'car.html'
+    assert response.context['driver'] == driver
+
+
+def test_car_html_withou_driver(client, user):
+    response = client.get('/car')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'create-driver.html'
+    assert response.context['user'] == user
+
+
+def test_car_html_withou_user(client):
+    response = client.get('/car')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.template.name == 'sign-in.html'

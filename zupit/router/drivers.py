@@ -22,6 +22,11 @@ def create_driver(
     driver: Driver = Depends(Driver.as_form),
 ) -> RedirectResponse:
     try:
+        driver_db = get_driver_db(driver.user_id, session)
+        if driver_db:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT, detail='Driver already exists'
+            )
         create_driver_db(driver, session)
         request.session['driver'] = True
         return RedirectResponse(url='/offer', status_code=HTTPStatus.SEE_OTHER)

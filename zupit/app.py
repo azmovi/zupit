@@ -84,6 +84,13 @@ def create_driver(request: Request, session: Session):
 @app.get('/car', response_class=HTMLResponse)
 def car(request: Request, session: Session):
     user = get_current_user(request, session)
-    return templates.TemplateResponse(
-        request=request, name='car.html', context={'user': user}
+    driver = get_current_driver(request, session)
+    if user and driver:
+        return templates.TemplateResponse(
+            request=request,
+            name='car.html',
+            context={'user': user, 'driver': driver},
+        )
+    return RedirectResponse(
+        url='/create-driver', status_code=HTTPStatus.SEE_OTHER
     )

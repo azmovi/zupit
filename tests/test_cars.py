@@ -16,7 +16,7 @@ def test_create_car(client, user, driver):
 
 
 def test_list_car_of_user(client, user, car1, car2):
-    response = client.get(f"/cars/{user.id}")
+    response = client.get(f'/cars/{user.id}')
     cars = [Car.model_validate(car).model_dump() for car in [car1, car2]]
     assert response.json() == {'cars': cars}
 

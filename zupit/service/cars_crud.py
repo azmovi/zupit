@@ -60,7 +60,6 @@ def get_car_db(
 def get_cars_db(
     user_id: int, session: Session = Depends(get_session)
 ) -> CarList:
-
     car_list = []
     sql = text(' SELECT * FROM get_cars_by_user_id(:user_id)')
     try:

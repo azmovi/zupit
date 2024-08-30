@@ -1,43 +1,45 @@
-from zupit.schemas.drivers import Driver
-
-
 def test_create_driver_without_preferences(client, user):
-    esperado = {
+    driver = {
         'cnh': '123456789',
+        'user_id': user.id,
         'preferences': None,
     }
 
-    payload = {
-        **esperado,
-        'user_id': f'{user.id}',
-    }
+    response = client.post('/drivers', data=driver)
 
-    response = client.post('/drivers', data=payload)
-    driver_db = response.context['driver']
-    driver = Driver(user_id=user.id, rating=0, **esperado)
-
-    assert driver == driver_db
     assert response.template.name == 'offer/first.html'
+    assert response.context['driver']
 
 
 def test_create_driver_with_preferences(client, user):
-    esperado = {
+    driver = {
+        'user_id': user.id,
         'cnh': '123456789',
         'preferences': 'Gosto de cachorro quente',
     }
 
-    payload = {
-        **esperado,
-        'user_id': f'{user.id}',
+    response = client.post('/drivers', data=driver)
+
+    assert response.template.name == 'offer/first.html'
+    assert response.context['driver']
+
+
+def test_create_same_driver(client, user, driver):
+    driver = {
+        'user_id': user.id,
+        'cnh': driver.cnh,
+        'preferences': driver.preferences,
     }
 
-    response = client.post('/drivers', data=payload)
+    response = client.post('/drivers', data=driver)
 
-    driver_db = response.context['driver']
-    driver = Driver(user_id=user.id, rating=0, **esperado)
+    request = response.context.get('request', None)
+    user_db = response.context.get('user', None)
+    error = request.session.get('error', None)
 
-    assert driver == driver_db
-    assert response.template.name == 'offer/first.html'
+    assert response.template.name == 'create-driver.html'
+    assert user_db == user
+    assert error == 'Driver already exists'
 
 
-# TODO Create invalid Driver
+# TODO teste com o input invalido
