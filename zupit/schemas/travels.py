@@ -28,8 +28,7 @@ class Travel(BaseModel):
 class Address(BaseModel):
     cep: str
     street: str
-    complement: str
+    district: str
     city: str
     state: str
     house_number: str
-    district: str

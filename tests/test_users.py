@@ -132,7 +132,25 @@ def test_wrong_password_user_credentials(client, user):
     assert response.template.name == 'sign-in.html'
 
 
-# def test_get_user_from_db(client, user):
-#     response = client.get(f'users/{user.id}')
-#     user_json = Public.model_validate(user).model_dump()
-#     return response, user_json
+def test_get_user_from_db(client, user):
+    response = client.get(f'users/{user.id}')
+
+    assert Public(**response.json()) == user
+
+
+def test_get_user_not_exists(client):
+    response = client.get('users/1')
+
+    assert response.json() is None
+
+
+def test_user_is_driver(client, user, driver):
+    response = client.get(f'users/is_driver/{user.id}')
+
+    assert response.json()
+
+
+def test_user_is_not_driver(client, user):
+    response = client.get(f'users/is_driver/{user.id}')
+
+    assert not response.json()

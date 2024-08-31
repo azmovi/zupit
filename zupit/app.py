@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import get_session
-from .router import cars, drivers, users
+from .router import cars, drivers, offer, users
 from .utils import get_current_driver, get_current_user
 
 app = FastAPI()
@@ -21,6 +21,7 @@ app.add_middleware(SessionMiddleware, secret_key='secret_key')
 app.include_router(users.router)
 app.include_router(drivers.router)
 app.include_router(cars.router)
+app.include_router(offer.router)
 
 
 Session = Annotated[Session, Depends(get_session)]
@@ -55,21 +56,6 @@ def form_sign_up(request: Request):
 @app.get('/sign-in', response_class=HTMLResponse)
 def form_sign_in(request: Request):
     return templates.TemplateResponse(request=request, name='sign-in.html')
-
-
-@app.get('/offer', response_class=HTMLResponse)
-def offer(request: Request, session: Session):
-    user = get_current_user(request, session)
-    driver = get_current_driver(request, session)
-    if user and driver:
-        return templates.TemplateResponse(
-            request=request,
-            name='offer/first.html',
-            context={'user': user, 'driver': driver},
-        )
-    return RedirectResponse(
-        url='/create-driver', status_code=HTTPStatus.SEE_OTHER
-    )
 
 
 @app.get('/create-driver', response_class=HTMLResponse)

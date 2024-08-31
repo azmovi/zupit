@@ -31,6 +31,7 @@ def create_car_db(car: Car, session: Session = Depends(get_session)) -> bool:
         )
         session.commit()
     except Exception:
+        session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
@@ -62,23 +63,16 @@ def get_cars_db(
 ) -> CarList:
     car_list = []
     sql = text(' SELECT * FROM get_cars_by_user_id(:user_id)')
-    try:
-        cars = session.execute(sql, {'user_id': user_id}).fetchall()
-    except Exception:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+    cars = session.execute(sql, {'user_id': user_id}).fetchall()
+    for car in cars:
+        car_exemple = Car(
+            renavam=car[0],
+            user_id=car[1],
+            brand=car[2],
+            model=car[3],
+            plate=car[4],
+            color=car[5],
         )
-
-    if cars:
-        for car in cars:
-            car_exemple = Car(
-                renavam=car[0],
-                user_id=car[1],
-                brand=car[2],
-                model=car[3],
-                plate=car[4],
-                color=car[5],
-            )
-            car_list.append(car_exemple)
+        car_list.append(car_exemple)
 
     return CarList(cars=car_list)

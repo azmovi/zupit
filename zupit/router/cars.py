@@ -33,7 +33,6 @@ def create_car(
         return RedirectResponse(url='/offer', status_code=HTTPStatus.SEE_OTHER)
 
     except HTTPException as exc:
-        print('ddue merda')
         request.session['error'] = exc.detail
         return RedirectResponse(url='/car', status_code=HTTPStatus.SEE_OTHER)
 

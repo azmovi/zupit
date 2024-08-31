@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.users import User, UserCredentials, UserPublic
+from zupit.schemas.users import Public, User, UserCredentials
 from zupit.service.drivers_crud import get_driver_db
 from zupit.service.users_crud import (
     confirm_user_db,
@@ -57,8 +57,8 @@ def create_user(
 )
 def confirm_user(
     request: Request,
-    session: Session,
-    user: UserCredentials,
+    session: Session,  # type: ignore
+    user: UserCredentials,  # type: ignore
 ) -> RedirectResponse:
     try:
         id = confirm_user_db(user, session)
@@ -76,18 +76,22 @@ def confirm_user(
 
 @router.get(
     '/{user_id}',
-    response_class=HTMLResponse,
+    response_model=Optional[Public],
 )
 def get_user(
     user_id: int,
     session: Session,  # type: ignore
-) -> Optional[UserPublic]:
+) -> Optional[Public]:
     if db_user := get_user_db(user_id, session):
         return db_user
     return None
 
 
-def is_driver(user_id: int, session: Session) -> bool:
+@router.get('/is_driver/{user_id}', response_model=bool)
+def is_driver(
+    user_id: int,
+    session: Session,  # type: ignore
+) -> bool:
     if get_driver_db(user_id, session):
         return True
     return False

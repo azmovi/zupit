@@ -10,7 +10,6 @@ from zupit.schemas.users import (
     Public,
     User,
     UserCredentials,
-    UserPublic,
 )
 
 
@@ -47,6 +46,7 @@ def create_user_db(user: User, session: Session) -> int:
         ).fetchone()
         session.commit()
     except Exception:
+        session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
@@ -59,9 +59,7 @@ def create_user_db(user: User, session: Session) -> int:
         )
 
 
-def get_user_db(
-    campo: Union[str, int], session: Session
-) -> Optional[UserPublic]:
+def get_user_db(campo: Union[str, int], session: Session) -> Optional[Public]:
     if isinstance(campo, int):
         sql = text('SELECT * FROM get_user_by_id(:campo);')
     elif isinstance(campo, str):

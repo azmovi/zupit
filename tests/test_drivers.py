@@ -42,4 +42,19 @@ def test_create_same_driver(client, user, driver):
     assert error == 'Driver already exists'
 
 
-# TODO teste com o input invalido
+def test_create_invalid_driver(client, user):
+    driver = {
+        'user_id': user.id + 1,
+        'cnh': '123456789',
+        'preferences': 'xpto',
+    }
+
+    response = client.post('/drivers', data=driver)
+
+    request = response.context.get('request', None)
+    user_db = response.context.get('user', None)
+    error = request.session.get('error', None)
+
+    assert response.template.name == 'create-driver.html'
+    assert user_db == user
+    assert error == 'Input invalid'

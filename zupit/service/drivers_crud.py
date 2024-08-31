@@ -23,9 +23,9 @@ def create_driver_db(driver: Driver, session: Session):
         session.commit()
 
     except Exception:
+        session.rollback()
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail='Driver already in database',
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
 
 

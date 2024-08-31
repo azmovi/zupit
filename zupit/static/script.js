@@ -1,12 +1,15 @@
-function buscarEndereco(cep, destino) {
-    const cepLimpo = cep.replace('-', '');
+function find_cep(raw_cep) {
+    const cep = raw_cep.replace('-', '');
     
-    if (cepLimpo.length === 8) {
-        fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+    if (cep.length === 8) {
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
             .then(response => response.json())
             .then(data => {
                 if (!data.erro) {
-                    document.getElementById(destino).value = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
+                    document.getElementById('street').value = data.logradouro;
+                    document.getElementById('district').value = data.bairro;
+                    document.getElementById('city').value = data.localidade;
+                    document.getElementById('state').value = data.uf;
                 } else {
                     alert('CEP não encontrado!');
                 }
@@ -20,7 +23,7 @@ function buscarEndereco(cep, destino) {
     }
 }
 
-function fetchCars(user_id) {
+function get_cars(user_id) {
     fetch(`/cars/${user_id}/`)
         .then(response => {
             if (!response.ok) {
@@ -40,4 +43,17 @@ function fetchCars(user_id) {
             }
         })
         .catch(error => console.error('Erro ao carregar carros:', error));
+}
+
+function save_form(step) {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function() {
+        const data_form = {};
+        Array.from(this.elements).forEach(element => {
+            if (element.name){
+                data_form[element.name] = element.value;
+            }
+        });
+        sessionStorage.setItem(step, JSON.stringify(data_form));
+    });
 }
