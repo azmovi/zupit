@@ -21,5 +21,4 @@ class Travel(BaseModel):
     departure_time: time
     pick_up: Address
     pick_off: Address
-    duration: time
-
+    # duration: time

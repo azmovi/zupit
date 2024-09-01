@@ -33,10 +33,18 @@
                 fetch("/offer/", {
                     method: "POST",
                     headers: {
-                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(true),
+                    body: JSON.stringify({
+                        status: true,
+                        user_id: first['user_id'],
+                        renavam: first['renavam'],
+                        space: first['space'],
+                        departure_date: second['departure_date'],
+                        departure_time: second['departure_time'],
+                        pick_up: third,
+                        pick_off: fourth,
+                    }),
                 })
                     .then(response => {
                         if (!response.ok) {

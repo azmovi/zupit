@@ -1,4 +1,5 @@
 from http import HTTPStatus
+import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Body
@@ -53,5 +54,10 @@ def step(
     )
 
 @router.post('/', response_model=bool)
-def crate_travel(request: Request, status: bool):
-    return status
+def crate_travel(
+    request: Request,
+    session: Session,  #type: ignore
+    travel: Travel
+):
+    print(travel)
+    return True
