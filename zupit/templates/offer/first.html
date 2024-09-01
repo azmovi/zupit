@@ -11,6 +11,8 @@
         {% include 'navbar.html' %}
         <h1>Informação do Carro para a viagem</h1>
         <form id="car-form" action="/offer/second">
+            <input type="hidden" id="user_id" name="user_id" value="{{ user.id }}"/>
+
             <label for="car">Escolha o Carro:</label>
             <select id="car" name="car" required>
                 <option value="" disabled selected>Selecione um carro</option>

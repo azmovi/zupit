@@ -41,7 +41,10 @@ def logoff(request: Request):
 
 
 @app.get('/search-travel', response_class=HTMLResponse)
-def search_travel(request: Request, session: Session):
+def search_travel(
+    request: Request,
+    session: Session  # type: ignore
+):
     user = get_current_user(request, session)
     return templates.TemplateResponse(
         request=request, name='search-travel.html', context={'user': user}
@@ -59,7 +62,10 @@ def form_sign_in(request: Request):
 
 
 @app.get('/create-driver', response_class=HTMLResponse)
-def create_driver(request: Request, session: Session):
+def create_driver(
+    request: Request,
+    session: Session  # type: ignore
+):
     if user := get_current_user(request, session):
         return templates.TemplateResponse(
             request=request, name='create-driver.html', context={'user': user}
@@ -68,7 +74,10 @@ def create_driver(request: Request, session: Session):
 
 
 @app.get('/car', response_class=HTMLResponse)
-def car(request: Request, session: Session):
+def car(
+    request: Request,
+    session: Session  # type: ignore
+):
     user = get_current_user(request, session)
     driver = get_current_driver(request, session)
     if user and driver:
