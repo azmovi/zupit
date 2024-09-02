@@ -1,14 +1,12 @@
 from http import HTTPStatus
-import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Body
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Travel
 from zupit.utils import get_current_driver, get_current_user
 
 templates = Jinja2Templates(directory='zupit/templates')
@@ -53,11 +51,3 @@ def step(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER
     )
 
-@router.post('/', response_model=bool)
-def crate_travel(
-    request: Request,
-    session: Session,  #type: ignore
-    travel: Travel
-):
-    print(travel)
-    return True

@@ -316,20 +316,7 @@ $$;
 ---------------------------VIAGEM-------------------------------
 -----------------------------------------------------------------
 
-
-CREATE TABLE trips(
-    id SERIAL PRIMARY KEY,
-    date_start DATE NOT NULL,
-    time_start TIMESTAMP NOT NULL,
-    space INTEGER NOT NULL,
-    status BOOLEAN NOT NULL,
-    value BOOLEAN NOT NULL,
-    id_start_address INTEGER NOT NULL,
-    id_end_address INTEGER NOT NULL,
-    id_caronista INTEGER NOT NULL,
-    id_carro INTEGER NOT NULL
-);
-
+CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
 
 CREATE TABLE address (
     id SERIAL PRIMARY KEY,
@@ -342,4 +329,35 @@ CREATE TABLE address (
     district VARCHAR(50) not NULL
 );
 
+CREATE TABLE travels(
+    id SERIAL PRIMARY KEY,
+    status BOOLEAN NOT NULL,
+    user_id INTEGER NOT NULL,
+    renavam VARCHAR(11) NOT NULL,
+    space INTEGER NOT NULL,
+    departure_date DATE NOT NULL,
+    departure_time TIMESTAMP NOT NULL,
+    pick_up_id INTEGER NOT NULL,
+);
 
+
+CREATE FUNCTION create_travel(
+    p_name VARCHAR,
+    p_email VARCHAR,
+    p_password VARCHAR,
+    p_birthday DATE,
+    p_sex gender,
+    p_cpf VARCHAR
+) RETURNS SETOF user_public
+LANGUAGE plpgsql
+AS $$
+DECLARE 
+    v_user_id INTEGER;
+BEGIN
+    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
+    PERFORM _create_brazilian(p_cpf, v_user_id);
+
+    RETURN QUERY 
+    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_cpf;
+END;
+$$;
