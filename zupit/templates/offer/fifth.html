@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title> Travel confirmation </title>
+        <title>Travel Confirmation</title>
         <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
     </head>
     <body>
@@ -11,7 +11,7 @@
             {% include 'navbar.html' %}
             <h1>Confirmação de Viagem</h1>
             <form>
-                <button class="button3" type="submit" id="confirm"> Confirmar Viagem </button>
+                <button class="button3" type="submit" id="confirm">Confirmar Viagem</button>
             </form>
             <a class="button3" href="javascript:history.back()">Voltar</a>
         </section>
@@ -27,10 +27,9 @@
             console.log(third);
             console.log(fourth);
 
-            document.getElementById('confirm').addEventListener('click', function (event) {
+            document.getElementById('confirm').addEventListener('click', async function (event) {
                 event.preventDefault();
-
-                fetch("/offer/", {
+                fetch("/travels/", {
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json',
@@ -58,3 +57,4 @@
         </script>
     </body>
 </html>
+

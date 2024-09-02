@@ -17,6 +17,7 @@ python-multipart = "^0.0.9"
 starlette = "^0.38.2"
 itsdangerous = "^2.2.0"
 sqlalchemy = "^2.0.32"
+googlemaps = "^4.10.0"
 
 
 [tool.poetry.group.dev.dependencies]

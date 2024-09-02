@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import get_session
-from .router import cars, drivers, offer, users
+from .router import cars, drivers, offer, travels, users
 from .utils import get_current_driver, get_current_user
 
 app = FastAPI()
@@ -22,6 +22,7 @@ app.include_router(users.router)
 app.include_router(drivers.router)
 app.include_router(cars.router)
 app.include_router(offer.router)
+app.include_router(travels.router)
 
 
 Session = Annotated[Session, Depends(get_session)]
@@ -43,7 +44,7 @@ def logoff(request: Request):
 @app.get('/search-travel', response_class=HTMLResponse)
 def search_travel(
     request: Request,
-    session: Session  # type: ignore
+    session: Session,  # type: ignore
 ):
     user = get_current_user(request, session)
     return templates.TemplateResponse(
@@ -64,7 +65,7 @@ def form_sign_in(request: Request):
 @app.get('/create-driver', response_class=HTMLResponse)
 def create_driver(
     request: Request,
-    session: Session  # type: ignore
+    session: Session,  # type: ignore
 ):
     if user := get_current_user(request, session):
         return templates.TemplateResponse(
@@ -76,7 +77,7 @@ def create_driver(
 @app.get('/car', response_class=HTMLResponse)
 def car(
     request: Request,
-    session: Session  # type: ignore
+    session: Session,  # type: ignore
 ):
     user = get_current_user(request, session)
     driver = get_current_driver(request, session)

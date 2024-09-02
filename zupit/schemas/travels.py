@@ -1,7 +1,9 @@
 from datetime import date, time
+from typing import Optional
 
+from pydantic import BaseModel, model_validator
 
-from pydantic import BaseModel
+from zupit.service.travels_crud import get_distance
 
 class Address(BaseModel):
     cep: str
@@ -10,6 +12,7 @@ class Address(BaseModel):
     city: str
     state: str
     house_number: str
+
 
 class Travel(BaseModel):
     status: bool
@@ -20,4 +23,16 @@ class Travel(BaseModel):
     departure_time: time
     pick_up: Address
     pick_off: Address
-    # duration: time
+    distance: Optional[str] = None
+    duration: Optional[str] = None
+
+    @model_validator(mode='after')
+    def calculate_metrics(self):
+        origin = self.pick_up.cep
+        destination = self.pick_off.cep
+
+        result = get_distance(origin, destination)
+        
+        if result:
+            self.distance, self.duration = result
+        return self
