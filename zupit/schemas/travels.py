@@ -3,7 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, model_validator
 
-from zupit.service.travels_crud import get_distance
+from zupit.utils import get_distance
+
 
 class Address(BaseModel):
     cep: str
@@ -12,10 +13,12 @@ class Address(BaseModel):
     city: str
     state: str
     house_number: str
+    direction: str
+    user_id: int
 
 
 class Travel(BaseModel):
-    status: bool
+    status: bool = True
     user_id: int
     renavam: str
     space: int
@@ -32,7 +35,7 @@ class Travel(BaseModel):
         destination = self.pick_off.cep
 
         result = get_distance(origin, destination)
-        
+
         if result:
             self.distance, self.duration = result
         return self

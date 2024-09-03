@@ -216,14 +216,13 @@ $$;
 ---------------------------Caronista-----------------------------
 -----------------------------------------------------------------
 
-CREATE TABLE drivers(
+CREATE TABLE drivers (
     cnh VARCHAR(9) PRIMARY KEY,
     user_id INTEGER NOT NULL,
     rating FLOAT NOT NULL,
     preferences VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 
 CREATE FUNCTION create_driver(
     p_user_id INTEGER,
@@ -244,7 +243,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE FUNCTION get_driver(p_user_id INTEGER)
 RETURNS SETOF drivers
 LANGUAGE plpgsql
@@ -263,7 +261,7 @@ CREATE TABLE cars (
     brand VARCHAR(50) NOT NULL,
     model VARCHAR(50) NOT NULL,
     plate VARCHAR(7) NOT NULL,
-    color VARCHAR(50) NOT NULL, 
+    color VARCHAR(50) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -274,8 +272,7 @@ CREATE FUNCTION create_car(
     p_model VARCHAR(50),
     p_plate VARCHAR(7),
     p_color VARCHAR(50)
-)
-RETURNS VOID
+) RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -283,7 +280,6 @@ BEGIN
     VALUES (p_renavam, p_user_id, p_brand, p_model, p_plate, p_color);
 END;
 $$;
-
 
 CREATE FUNCTION get_car_by_renavam(p_renavam VARCHAR)
 RETURNS SETOF cars
@@ -298,7 +294,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE FUNCTION get_cars_by_user_id(p_user_id INTEGER)
 RETURNS SETOF cars
 LANGUAGE plpgsql
@@ -311,7 +306,6 @@ BEGIN
 END;
 $$;
 
-
 -----------------------------------------------------------------
 ---------------------------VIAGEM-------------------------------
 -----------------------------------------------------------------
@@ -320,16 +314,42 @@ CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
 
 CREATE TABLE address (
     id SERIAL PRIMARY KEY,
-    cep VARCHAR(8) NOT NULL,
+    cep VARCHAR(9) NOT NULL,
     street VARCHAR(50) NOT NULL,
-    complement VARCHAR(50) NOT NULL,
-    city VARCHAR(50) not NULL,
-    state VARCHAR(2) not NULL,
-    house_number VARCHAR(50) not NULL,
-    district VARCHAR(50) not NULL
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(2) NOT NULL,
+    district VARCHAR(50) NOT NULL,
+    house_number VARCHAR(5) NOT NULL,
+    direction direction NOT NULL,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE travels(
+CREATE FUNCTION create_address(
+    p_cep VARCHAR,
+    p_street VARCHAR,
+    p_city VARCHAR,
+    p_state VARCHAR,
+    p_district VARCHAR,
+    p_house_number VARCHAR,
+    p_direction direction,
+    p_user_id INTEGER
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    address_id INTEGER;
+BEGIN
+    INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
+    VALUES (p_cep, p_street, p_city, p_state, p_district, p_house_number, p_direction, p_user_id)
+    RETURNING id INTO address_id;
+
+    RETURN address_id;
+END;
+$$;
+
+
+CREATE TABLE travels (
     id SERIAL PRIMARY KEY,
     status BOOLEAN NOT NULL,
     user_id INTEGER NOT NULL,
@@ -337,27 +357,35 @@ CREATE TABLE travels(
     space INTEGER NOT NULL,
     departure_date DATE NOT NULL,
     departure_time TIMESTAMP NOT NULL,
-    pick_up_id INTEGER NOT NULL,
+    origin_id INTEGER NOT NULL,
+    destination_id INTEGER NOT NULL,
+    distance VARCHAR(50) NOT NULL,
+    duration VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (origin_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 
-CREATE FUNCTION create_travel(
-    p_name VARCHAR,
-    p_email VARCHAR,
-    p_password VARCHAR,
-    p_birthday DATE,
-    p_sex gender,
-    p_cpf VARCHAR
-) RETURNS SETOF user_public
+CREATE FUNCTION create_address(
+    p_street VARCHAR,
+    p_city VARCHAR,
+    p_state VARCHAR,
+    p_district VARCHAR,
+    p_house_number VARCHAR,
+    p_direction direction,
+    p_user_id INTEGER
+) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
-DECLARE 
-    v_user_id INTEGER;
+DECLARE
+    address_id INTEGER;
 BEGIN
-    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
-    PERFORM _create_brazilian(p_cpf, v_user_id);
+    INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
+    VALUES (p_cep, p_street, p_city, p_state, p_district, p_house_number, p_direction, p_user_id)
+    RETURNING id INTO address_id;
 
-    RETURN QUERY 
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_cpf;
+    RETURN address_id;
 END;
 $$;
