@@ -94,7 +94,7 @@ def car1(client, user) -> Car:
 @pytest.fixture
 def car2(client, user) -> Car:
     car = {
-        'renavam': '12345671920',
+        'renavam': '12345671929',
         'user_id': user.id,
         'brand': 'fiat',
         'model': 'argo',

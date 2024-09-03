@@ -22,12 +22,11 @@ def create_travel_db(
     session: Session,  # type: ignore
     travel: Travel,
 ) -> bool:
-    create_address_db(session, travel.pick_up)
-    create_address_db(session, travel.pick_off)
+    origin_id = create_address_db(session, travel.pick_up)
+    destination_id = create_address_db(session, travel.pick_off)
 
-    text("""
+    sql = text("""
     SELECT * FROM create_travel(
-        :status,
         :user_id,
         :renavam,
         :space,
@@ -39,6 +38,28 @@ def create_travel_db(
         :duration
     )
    """)
+    try:
+        result = session.execute(
+            sql,
+            {
+                'user_id': travel.user_id,
+                'renavam': travel.renavam,
+                'space': travel.space,
+                'departure_date': travel.departure_date,
+                'departure_time': travel.departure_time,
+                'origin_id': origin_id,
+                'destination_id': destination_id,
+                'distance': travel.distance,
+                'duration': travel.duration,
+            }
+        )
+        session.commit()
+        return result
+    except:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+        )
     return True
 
 
@@ -73,5 +94,5 @@ def create_address_db(
     except Exception:
         session.rollback()
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail=f'Input invalid'
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
