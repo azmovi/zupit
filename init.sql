@@ -389,3 +389,51 @@ BEGIN
     RETURN address_id;
 END;
 $$;
+
+-----------------------------------------------------------------
+-----------------------------Carro-------------------------------
+-----------------------------------------------------------------
+
+CREATE FUNCTION validate_and_notify_renavam() RETURNS trigger AS $$
+DECLARE
+    renavam TEXT;
+    soma INTEGER;
+    resto INTEGER;
+    digito_verificador INTEGER;
+    multiplicadores INTEGER[] := ARRAY[2, 3, 4, 5, 6, 7, 8, 9];
+BEGIN
+    renavam := NEW.renavam;
+
+    -- Verifica se o RENAVAM tem 11 dígitos numéricos
+    IF length(renavam) != 11 OR renavam ~ '\\D' THEN
+        RAISE EXCEPTION 'RENAVAM deve ter 11 dígitos numéricos';
+    END IF;
+
+    -- Cálculo do dígito verificador
+    soma := 0;
+    FOR i IN 2..11 LOOP
+        soma := soma + (cast(substring(renavam from 11 - i + 1 for 1) as integer) * multiplicadores[(i - 1) % 8 + 1]);
+    END LOOP;
+
+    resto := soma % 11;
+    digito_verificador := CASE 
+        WHEN resto >= 2 THEN 11 - resto
+        ELSE 0
+    END;
+
+    -- Compara o dígito verificador calculado com o fornecido
+    IF digito_verificador != cast(substring(renavam from 1 for 1) as integer) THEN
+        RAISE EXCEPTION 'RENAVAM inválido';
+    END IF;
+
+    -- Notifica que o RENAVAM foi validado com sucesso
+    PERFORM pg_notify('renavam_validation', 'RENAVAM ' || renavam || ' validado com sucesso.');
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER renavam_validation_trigger
+AFTER INSERT OR UPDATE ON cars
+FOR EACH ROW
+EXECUTE FUNCTION validate_and_notify_renavam();
