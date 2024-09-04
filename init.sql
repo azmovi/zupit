@@ -217,7 +217,7 @@ $$;
 -----------------------------------------------------------------
 
 CREATE TABLE drivers (
-    cnh VARCHAR(9) PRIMARY KEY,
+    cnh VARCHAR(11) PRIMARY KEY,
     user_id INTEGER NOT NULL,
     rating FLOAT NOT NULL,
     preferences VARCHAR(255),
@@ -471,7 +471,7 @@ BEGIN
 
     -- Atualizar a coluna de avaliação média do usuário
     UPDATE users
-    SET avaliacao_media = nova_media
+    SET rating = nova_media
     WHERE id = NEW.id_destinatario;
 
     RETURN NEW;

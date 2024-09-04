@@ -13,8 +13,9 @@ from zupit.router.drivers import get_driver
 from zupit.schemas.cars import Car
 from zupit.schemas.drivers import Driver
 from zupit.schemas.travels import Address
-from zupit.schemas.users import Public
+from zupit.schemas.users import Gender, Nationality, Public, User
 from zupit.service.travels_crud import create_address_db, get_address_db
+from zupit.service.users_crud import create_user_db, get_user_db
 
 
 @pytest.fixture(scope='session')
@@ -68,6 +69,23 @@ def user(client) -> Public:
 
     response = client.post('/users', data=user)
     return response.context['user']
+
+
+@pytest.fixture
+def user2(session) -> Public:
+    user2 = User(
+        name='Vitor',
+        email='vitor@email.com',
+        password='456',
+        birthday='2002-03-02',
+        sex=Gender('MAN'),
+        nationality=Nationality('BRAZILIAN'),
+        cpf='98765432144',
+    )
+    id = create_user_db(user2, session)
+    user_db = get_user_db(id, session)
+
+    return user_db
 
 
 @pytest.fixture

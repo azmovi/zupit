@@ -1,8 +1,9 @@
-from datetime import datetime
 from enum import Enum
 from typing import Optional
+
 from fastapi import Form
 from pydantic import BaseModel
+
 
 class tipo_avaliacao(Enum):
     CARONISTA = 'CARONISTA'
@@ -14,14 +15,13 @@ class nota_avaliacao(Enum):
     RUIM = 'RUIM'
     MEDIANO = 'MEDIANO'
     BOM = 'BOM'
-    OTIMO = 'OTIMO' 
+    OTIMO = 'OTIMO'
 
 
 class Avalia(BaseModel):
     id_autor: int
     id_destinatario: int
     tipo_de_avaliado: tipo_avaliacao
-    criacao: datetime
     nota: nota_avaliacao
     conteudo: Optional[str] = None
 
