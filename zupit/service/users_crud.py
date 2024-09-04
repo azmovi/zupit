@@ -67,7 +67,6 @@ def get_user_db(campo: Union[str, int], session: Session) -> Optional[Public]:
 
     result = session.execute(sql, {'campo': campo})
     user_db = result.fetchone()
-
     session.commit()
 
     if user_db:

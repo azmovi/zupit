@@ -309,7 +309,6 @@ $$;
 -----------------------------------------------------------------
 ---------------------------VIAGEM-------------------------------
 -----------------------------------------------------------------
-
 CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
 
 CREATE TABLE address (
@@ -345,6 +344,21 @@ BEGIN
     RETURNING id INTO address_id;
 
     RETURN address_id;
+END;
+$$;
+
+CREATE FUNCTION get_address_by_id(
+    p_id INTEGER
+) RETURNS SETOF address
+LANGUAGE plpgsql
+AS $$
+DECLARE
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM address
+    WHERE id = p_id 
+    LIMIT 1;
 END;
 $$;
 

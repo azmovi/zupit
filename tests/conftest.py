@@ -12,7 +12,9 @@ from zupit.database import get_session
 from zupit.router.drivers import get_driver
 from zupit.schemas.cars import Car
 from zupit.schemas.drivers import Driver
+from zupit.schemas.travels import Address
 from zupit.schemas.users import Public
+from zupit.service.travels_crud import create_address_db, get_address_db
 
 
 @pytest.fixture(scope='session')
@@ -104,3 +106,39 @@ def car2(client, user) -> Car:
 
     client.post('/cars', data=car)
     return Car(**car)
+
+
+@pytest.fixture
+def pick_up(session, user):
+    address = Address(
+        cep='68015-540',
+        street='Beco São Carlos',
+        district='Urumari',
+        city='Santarém',
+        state='PA',
+        house_number='1234',
+        direction='PICK_UP',
+        user_id=user.id,
+    )
+    id = create_address_db(session, address)
+    address_db = get_address_db(session, id)
+
+    return address_db
+
+
+@pytest.fixture
+def pick_off(session, user):
+    address = Address(
+        cep='74223-055',
+        street='Rua T 36',
+        district='Setor Bueno',
+        city='Goiânia',
+        state='GO',
+        house_number='4321',
+        direction='PICK_OFF',
+        user_id=user.id,
+    )
+    id = create_address_db(session, address)
+    address_db = get_address_db(session, id)
+
+    return address_db

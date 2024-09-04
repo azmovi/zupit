@@ -30,10 +30,10 @@ def create_car_db(car: Car, session: Session = Depends(get_session)) -> bool:
             },
         )
         session.commit()
-    except Exception as e:
+    except Exception:
         session.rollback()
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail=f'Input invalid {e}'
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
     return bool(result)
 
