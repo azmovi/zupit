@@ -424,7 +424,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Retornar detalhes de todos os participantes da viagem
+    -- Retornar detalhes de todos os participantes da viagem especificada
     RETURN QUERY
     SELECT u.id AS participant_id,
            u.name,
