@@ -381,13 +381,8 @@ CREATE FUNCTION create_travel(
 ) RETURNS VOID
 LANGUAGE plpgsql
 AS $$
-DECLARE
-    address_id INTEGER;
 BEGIN
-    INSERT INTO travels (sttus, street, city, state, district, house_number, direction, user_id)
-    VALUES (p_cep, p_street, p_city, p_state, p_district, p_house_number, p_direction, p_user_id)
-    RETURNING id INTO address_id;
-
-    RETURN address_id;
+    INSERT INTO travels (status, user_id, renavam, space, departure_date, departure_time, origin_id, destination_id, distance, duration)
+    VALUES (TRUE, p_user_id, p_renavam, p_space, p_departure_date, p_departure_time, p_origin_id, p_destination_id, p_distance, p_duration)
 END;
 $$;

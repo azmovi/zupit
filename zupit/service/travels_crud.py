@@ -51,16 +51,15 @@ def create_travel_db(
                 'destination_id': destination_id,
                 'distance': travel.distance,
                 'duration': travel.duration,
-            }
+            },
         )
         session.commit()
         return result
-    except:
+    except Exception:
         session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
-    return True
 
 
 def create_address_db(
