@@ -309,7 +309,6 @@ $$;
 -----------------------------------------------------------------
 ---------------------------VIAGEM-------------------------------
 -----------------------------------------------------------------
-
 CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
 
 CREATE TABLE address (
@@ -348,6 +347,21 @@ BEGIN
 END;
 $$;
 
+CREATE FUNCTION get_address_by_id(
+    p_id INTEGER
+) RETURNS SETOF address
+LANGUAGE plpgsql
+AS $$
+DECLARE
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM address
+    WHERE id = p_id 
+    LIMIT 1;
+END;
+$$;
+
 
 CREATE TABLE travels (
     id SERIAL PRIMARY KEY,
@@ -367,22 +381,22 @@ CREATE TABLE travels (
     FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-
 CREATE FUNCTION create_travel(
-    p_user_id,
-    p_renavam,
-    p_space,
-    p_departure_date,
-    p_departure_time,
-    p_origin_id,
-    p_destination_id,
-    p_distance,
-    p_duration
+    p_user_id INTEGER,
+    p_renavam VARCHAR,
+    p_space INTEGER,
+    p_departure_date DATE,
+    p_departure_time TIMESTAMP,
+    p_origin_id INTEGER,
+    p_destination_id INTEGER,
+    p_distance VARCHAR,
+    p_duration VARCHAR
 ) RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO travels (status, user_id, renavam, space, departure_date, departure_time, origin_id, destination_id, distance, duration)
-    VALUES (TRUE, p_user_id, p_renavam, p_space, p_departure_date, p_departure_time, p_origin_id, p_destination_id, p_distance, p_duration)
+    VALUES (TRUE, p_user_id, p_renavam, p_space, p_departure_date, p_departure_time, p_origin_id, p_destination_id, p_distance, p_duration);
 END;
 $$;
+

@@ -95,3 +95,36 @@ def create_address_db(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
+
+
+def get_address_db(
+    session: Session,  # type: ignore
+    address_id: int,
+) -> Address:
+    sql = text('SELECT * FROM get_address_by_id(:id)')
+    try:
+        result = session.execute(sql, {'id': address_id})
+        address_db = result.fetchone()
+        session.commit()
+        if address_db:
+            return Address(
+                id=address_db[0],
+                cep=address_db[1],
+                street=address_db[2],
+                city=address_db[3],
+                state=address_db[4],
+                district=address_db[5],
+                house_number=address_db[6],
+                direction=address_db[7],
+                user_id=address_db[8],
+            )
+        else:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='Address not found',
+            )
+    except Exception:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+        )
