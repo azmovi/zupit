@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Viagens</title>
+    <link href="{{ url_for('static', path='style.css') }}" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        section#historico {
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #ffffff;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        table tr:hover {
+            background-color: #ddd;
+        }
+
+        .space-between {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .button1 {
+            background-color: #008CBA;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .button1:hover {
+            background-color: #007bb5;
+        }
+    </style>
+</head>
+<body>
+    <section id="historico">
+        <!-- Incluindo a barra de navegação -->
+        {% include 'navbar.html' %}
+        
+        <h1>Histórico de Viagens</h1>
+
+        <!-- Exibir a lista de viagens -->
+        {% if travels %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Origem</th>
+                        <th>Destino</th>
+                        <th>Data</th>
+                        <th>Hora de Partida</th>
+                        <th>Distância</th>
+                        <th>Duração</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for travel in travels %}
+                        <tr>
+                            <td>{{ travel.origin.street }}, {{ travel.origin.city }}</td>
+                            <td>{{ travel.destination.street }}, {{ travel.destination.city }}</td>
+                            <td>{{ travel.departure_date }}</td>
+                            <td>{{ travel.departure_time.strftime('%H:%M') }}</td>
+                            <td>{{ travel.distance }}</td>
+                            <td>{{ travel.duration }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma viagem encontrada.</p>
+        {% endif %}
+    </section>
+</body>
+</html>
