@@ -471,7 +471,7 @@ BEGIN
 
     -- Atualizar a coluna de avaliação média do usuário
     UPDATE users
-    SET rating = nova_media
+    SET avaliacao_media = nova_media
     WHERE id = NEW.id_destinatario;
 
     RETURN NEW;

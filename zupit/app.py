@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import get_session
-from .router import cars, drivers, offer, travels, users, avalia
+from .router import avalia, cars, drivers, offer, travels, users
 from .utils import get_current_driver, get_current_user
 
 app = FastAPI()
@@ -51,6 +51,20 @@ def search_travel(
     return templates.TemplateResponse(
         request=request, name='search-travel.html', context={'user': user}
     )
+
+
+@app.get('/previous-travels', response_class=HTMLResponse)
+def previous_travels(
+    request: Request,
+    session: Session,  # type: ignore
+):
+    if user := get_current_user(request, session):
+        return templates.TemplateResponse(
+            request=request,
+            name='previous-travels.html',
+            context={'user': user},
+        )
+    return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
 
 @app.get('/sign-up', response_class=HTMLResponse)
