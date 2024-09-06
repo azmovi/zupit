@@ -60,10 +60,9 @@ def previous_travels(
 ):
     if user := get_current_user(request, session):
         return templates.TemplateResponse(
-            request=request,
             name='previous-travels.html',
-            context={'user': user},
-        )
+            context={'request': request, 'user': user},
+        )   
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
 

@@ -381,6 +381,18 @@ CREATE TABLE travels (
     FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE FUNCTION get_travels_by_user_id(p_user_id INTEGER)
+RETURNS SETOF travels
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM travels
+    WHERE user_id = p_user_id;
+END;
+$$;
+
 -----------------------------------------------------------------
 ---------------------------AVALIACAO-------------------------------
 -----------------------------------------------------------------
@@ -503,3 +515,5 @@ JOIN
     users u_autor ON a.id_autor = u_autor.id
 JOIN
     users u_destinatario ON a.id_destinatario = u_destinatario.id;
+
+    INSERT INTO users (name, email, password, birthday, sex, user_status)

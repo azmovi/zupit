@@ -48,3 +48,6 @@ class Travel(BaseModel):
             distance = int(self.distance.split()[0])
             self.price = 30 + 0.25 * distance
         return self
+    
+class TravelList(BaseModel):
+    travels: list[Travel]
