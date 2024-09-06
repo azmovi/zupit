@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import datetime, timedelta
 from typing import Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -23,12 +23,12 @@ class Travel(BaseModel):
     user_id: int
     renavam: str
     space: int
-    departure_date: date
-    departure_time: time
+    departure: datetime
     pick_up: Address
     pick_off: Address
     distance: Optional[str] = None
-    duration: Optional[str] = None
+    duration: Optional[int] = None
+    arrival: Optional[datetime] = None
     price: Optional[float] = None
 
     @model_validator(mode='after')
@@ -40,6 +40,12 @@ class Travel(BaseModel):
 
         if result:
             self.distance, self.duration = result
+        return self
+
+    @model_validator(mode='after')
+    def arrival_previst(self):
+        if self.duration is not None:
+            self.arrival = self.departure + timedelta(seconds=self.duration)
         return self
 
     @model_validator(mode='after')

@@ -15,7 +15,23 @@ def valid_travel(
     session: Session,  # type: ignore
     travel: Travel,
 ) -> bool:
-    return True
+    sql = text('SELECT * FROM valid_travel(:user_id, :departure, :arrival)')
+    try:
+        result = session.execute(
+            sql,
+            {
+                'user_id': travel.user_id,
+                'departure': travel.departure,
+                'arrival': travel.arrival,
+            },
+        )
+        session.commit()
+        return result.fetchone()[0]
+    except Exception:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
+        )
 
 
 def create_travel_db(
@@ -30,12 +46,12 @@ def create_travel_db(
         :user_id,
         :renavam,
         :space,
-        :departure_date,
-        :departure_time,
+        :departure,
         :origin_id,
         :destination_id,
         :distance,
-        :duration
+        :arrival,
+        :price
     )
    """)
     try:
@@ -45,12 +61,12 @@ def create_travel_db(
                 'user_id': travel.user_id,
                 'renavam': travel.renavam,
                 'space': travel.space,
-                'departure_date': travel.departure_date,
-                'departure_time': travel.departure_time,
+                'departure': travel.departure,
                 'origin_id': origin_id,
                 'destination_id': destination_id,
                 'distance': travel.distance,
-                'duration': travel.duration,
+                'arrival': travel.arrival,
+                'price': travel.price,
             },
         )
         session.commit()

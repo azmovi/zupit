@@ -369,17 +369,63 @@ CREATE TABLE travels (
     user_id INTEGER NOT NULL,
     renavam VARCHAR(11) NOT NULL,
     space INTEGER NOT NULL,
-    departure_date DATE NOT NULL,
-    departure_time TIMESTAMP NOT NULL,
     origin_id INTEGER NOT NULL,
     destination_id INTEGER NOT NULL,
     distance VARCHAR(50) NOT NULL,
-    duration VARCHAR(50) NOT NULL,
+    departure TIMESTAMP NOT NULL,
+    price FLOAT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (origin_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE FUNCTION valid_travel(
+    p_user_id INTEGER,
+    p_departure TIMESTAMP,
+    p_arrival TIMESTAMP
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    is_valid BOOLEAN := TRUE;
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM travels 
+        WHERE user_id = p_user_id AND status = TRUE
+    ) THEN 
+        is_valid := FALSE;
+    END IF;
+
+    RETURN is_valid;
+END;
+$$;
+
+
+CREATE FUNCTION create_travel(
+    p_status BOOLEAN,
+    p_user_id INTEGER,
+    p_renavam VARCHAR,
+    p_space INTEGER,
+    p_departure TIMESTAMP,
+    p_origin_id INTEGER,
+    p_destination_id INTEGER,
+    p_distance VARCHAR,
+    p_arrival TIMESTAMP,
+    p_price FLOAT
+) RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO travels(
+        status, user_id, renavam, space, departure, origin_id, destination_id, distance, arrival, price
+    )
+    VALUES (
+        p_status, p_user_id, p_renavam, p_space, p_departure, p_origin_id, p_destination_id, p_distance, p_arrival, p_price
+    );
+END;
+$$;
 
 -----------------------------------------------------------------
 ---------------------------AVALIACAO-------------------------------

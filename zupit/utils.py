@@ -33,7 +33,11 @@ def get_current_driver(
     return None
 
 
-def get_distance(origin: str, destination: str) -> Optional[tuple[str, str]]:
+def get_distance(origin: str, destination: str) -> Optional[tuple[str, int]]:
+    """
+    ('2,850 km', 140400)
+    ('584 km', 3660)
+    """
     app = Client(Settings().API_KEY)  # type: ignore
 
     data = app.distance_matrix(
@@ -43,6 +47,6 @@ def get_distance(origin: str, destination: str) -> Optional[tuple[str, str]]:
     elements = rows.get('elements')[0]
     if elements.get('status') == 'OK':
         distance = elements.get('distance').get('text')
-        duration = elements.get('duration').get('text')
+        duration = elements.get('duration').get('value')
         return distance, duration
     return None
