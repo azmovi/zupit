@@ -33,20 +33,40 @@ def get_current_driver(
     return None
 
 
-def get_distance(origin: str, destination: str) -> Optional[tuple[str, int]]:
-    """
-    ('2,850 km', 140400)
-    ('584 km', 3660)
-    """
+def get_outputs(origin: str, destination: str) -> Optional[tuple[str, int]]:
     app = Client(Settings().API_KEY)  # type: ignore
 
-    data = app.distance_matrix(
+    data = app.distance_matrix(  # type: ignore
         origins=origin, destinations=destination, mode='driving'
     )
-    rows = data.get('rows')[0]
-    elements = rows.get('elements')[0]
-    if elements.get('status') == 'OK':
-        distance = elements.get('distance').get('text')
-        duration = elements.get('duration').get('value')
-        return distance, duration
+    if data:
+        rows = data.get('rows')[0]
+        elements = rows.get('elements')[0]
+        if elements.get('status') == 'OK':
+            distance = elements.get('distance').get('text')
+            duration = elements.get('duration').get('value')
+            return distance, duration
     return None
+
+
+def get_distance(
+    origin: str, destination: str, middle: Optional[str]
+) -> Optional[dict[str, tuple[str, int]]]:
+    """
+    {'middle': ('235 km', 10612), 'destination': ('76.2 km', 5977)}
+    {'destination': ('331 km', 15937)}
+    """
+    result = {}
+    if middle:
+        if results := get_outputs(origin, middle):
+            result['middle'] = results
+        if results := get_outputs(middle, destination):
+            result['destination'] = results
+    else:
+        if results := get_outputs(origin, destination):
+            result['destination'] = results
+
+    return result
+
+
+print(get_distance('13560-049', '01313-020', '11040-050'))

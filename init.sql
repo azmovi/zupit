@@ -307,9 +307,9 @@ END;
 $$;
 
 -----------------------------------------------------------------
----------------------------VIAGEM-------------------------------
+---------------------------VIAGEM--------------------------------
 -----------------------------------------------------------------
-CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
+CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF', 'MIDDLE');
 
 CREATE TABLE address (
     id SERIAL PRIMARY KEY,
@@ -393,7 +393,11 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM travels 
-        WHERE user_id = p_user_id AND status = TRUE
+        WHERE user_id = p_user_id AND status = TRUE 
+        AND (
+            (p_arrival > departure AND p_arrival < arrival)
+            OR (p_departure < arrival and p_departure > departure)
+        )
     ) THEN 
         is_valid := FALSE;
     END IF;
@@ -402,18 +406,20 @@ BEGIN
 END;
 $$;
 
+-- self.price = 30 + 0.25 * distance
 
 CREATE FUNCTION create_travel(
-    p_status BOOLEAN,
     p_user_id INTEGER,
     p_renavam VARCHAR,
     p_space INTEGER,
     p_departure TIMESTAMP,
     p_origin_id INTEGER,
+    p_middle_id INTEGER,
+    p_middle_distance VARCHAR,
+    p_middle_arrival TIMESTAMP,
     p_destination_id INTEGER,
-    p_distance VARCHAR,
-    p_arrival TIMESTAMP,
-    p_price FLOAT
+    p_destination_distance VARCHAR,
+    p_destination_arrival TIMESTAMP,
 ) RETURNS VOID
 LANGUAGE plpgsql
 AS $$

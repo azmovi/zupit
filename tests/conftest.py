@@ -160,3 +160,8 @@ def pick_off(session, user):
     address_db = get_address_db(session, id)
 
     return address_db
+
+
+# origin = '13560-049'
+# middle = '01313-020'
+# destination = '11040-050'

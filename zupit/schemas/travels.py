@@ -23,34 +23,44 @@ class Travel(BaseModel):
     user_id: int
     renavam: str
     space: int
+    middle_space: int
     departure: datetime
     pick_up: Address
+    middle: Optional[Address] = Field(default=None)
     pick_off: Address
-    distance: Optional[str] = None
-    duration: Optional[int] = None
-    arrival: Optional[datetime] = None
-    price: Optional[float] = None
+    middle_distace: Optional[str] = Field(default=None)
+    middle_duration: Optional[int] = Field(default=None)
+    destination_distance: Optional[str] = Field(default=None)
+    destination_duration: Optional[int] = Field(default=None)
+    middle_arrival: Optional[datetime] = Field(default=None)
+    destination_arrival: Optional[datetime] = Field(default=None)
+    price: Optional[float] = Field(default=None)
 
     @model_validator(mode='after')
     def calculate_metrics(self):
         origin = self.pick_up.cep
+        middle = None
+        if self.middle:
+            middle = self.middle.cep
         destination = self.pick_off.cep
 
-        result = get_distance(origin, destination)
-
+        result = get_distance(origin, destination, middle)
         if result:
-            self.distance, self.duration = result
+            if middle_results := result.get('middle', None):
+                self.middle_distace, self.middle_duration = middle_results
+            if destination_results := result.get('destination', None):
+                (
+                    self.destination_distance,
+                    self.destination_duration,
+                ) = destination_results
+        else:
+            raise ValueError('Invalid cep')
         return self
 
     @model_validator(mode='after')
     def arrival_previst(self):
-        if self.duration is not None:
-            self.arrival = self.departure + timedelta(seconds=self.duration)
-        return self
-
-    @model_validator(mode='after')
-    def calculate_price(self):
-        if self.distance:
-            distance = int(self.distance.split()[0])
-            self.price = 30 + 0.25 * distance
+        if self.destination_duration is not None:
+            self.arrival = self.departure + timedelta(
+                seconds=self.destination_duration
+            )
         return self

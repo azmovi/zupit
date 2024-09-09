@@ -22,6 +22,7 @@
             const second = JSON.parse(sessionStorage.getItem("second"));
             const third = JSON.parse(sessionStorage.getItem("third"));
             const fourth = JSON.parse(sessionStorage.getItem("fourth"));
+            const sixth = JSON.parse(sessionStorage.getItem("sixth"));
             const date = second['departure_date']
             const time = second['departure_time']
             const timestamp = `${date}T${time}`;
@@ -42,6 +43,7 @@
                         space: first['space'],
                         departure: timestamp,
                         pick_up: third,
+                        middle: sixth,
                         pick_off: fourth,
                     }),
                 })

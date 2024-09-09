@@ -38,10 +38,14 @@ def create_travel_db(
     session: Session,  # type: ignore
     travel: Travel,
 ) -> bool:
+    middle_id = None
     origin_id = create_address_db(session, travel.pick_up)
+    if travel.middle:
+        middle_id = create_address_db(session, travel.middle)
     destination_id = create_address_db(session, travel.pick_off)
 
-    sql = text("""
+    sql = text(
+        """
     SELECT * FROM create_travel(
         :user_id,
         :renavam,
@@ -53,7 +57,8 @@ def create_travel_db(
         :arrival,
         :price
     )
-   """)
+   """
+    )
     try:
         result = session.execute(
             sql,
@@ -63,6 +68,7 @@ def create_travel_db(
                 'space': travel.space,
                 'departure': travel.departure,
                 'origin_id': origin_id,
+                'middle_id': middle_id,
                 'destination_id': destination_id,
                 'distance': travel.distance,
                 'arrival': travel.arrival,
