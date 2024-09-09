@@ -62,6 +62,22 @@
         .button1:hover {
             background-color: #007bb5;
         }
+
+        /* Botão de detalhes */
+        .button-details {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-details:hover {
+            background-color: #45a049;
+        }
+
     </style>
 </head>
 <body user_id="{{ user.id }}">
@@ -81,11 +97,12 @@
                     <th>Horário de Saída</th>
                     <th>Distância</th>
                     <th>Duração</th>
+                    <th>Detalhes da Viagem</th> <!-- Coluna para o botão -->
                 </tr>
             </thead>
             <tbody id="travel-table-body">
                 <tr>
-                    <td colspan="4">Carregando...</td>  <!-- Alterado para colspan="4" -->
+                    <td colspan="7">Carregando...</td>  <!-- Alterado para colspan="7" -->
                 </tr>
             </tbody>
         </table>

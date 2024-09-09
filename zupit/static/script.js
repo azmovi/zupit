@@ -81,18 +81,18 @@ function get_travels(user_id) {
                         <td>${departureTime}</td>
                         <td>${travel.distance || "Distância não encontrada"}</td>
                         <td>${travel.duration || "Duração não encontrada"}</td>
+                        <td><a href="/trip-details/${travel.id}" class="button-details">Detalhes</a></td>
                     `;
                     console.log("Linha adicionada à tabela:", row.innerHTML);
                     tableBody.appendChild(row);
                 });
             } else {
                 console.log("Nenhuma viagem encontrada.");
-                tableBody.innerHTML = '<tr><td colspan="6">Nenhuma viagem encontrada.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7">Nenhuma viagem encontrada.</td></tr>';
             }
         })
         .catch(error => console.error('Erro ao carregar viagens:', error));
 }
-
 
 function save_form(step) {
     const form = document.querySelector('form');
