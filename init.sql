@@ -515,3 +515,31 @@ JOIN
     users u_autor ON a.id_autor = u_autor.id
 JOIN
     users u_destinatario ON a.id_destinatario = u_destinatario.id;
+
+INSERT INTO users (name, email, password, birthday, sex, user_status)
+VALUES ('Vitor', 'vitor@email.com', '456', '2002-03-02', 'MAN', true);
+
+INSERT INTO brazilians (cpf, user_id)
+VALUES ('98765432144', 1);
+INSERT INTO drivers (cnh, user_id, rating, preferences)
+VALUES ('123456789', 1, 5.0, 'Prefere rotas curtas e gosta de animais');
+INSERT INTO cars (renavam, user_id, brand, model, plate, color)
+VALUES ('98765432109', 1, 'Toyota', 'Corolla', 'ABC1234', 'Prata');
+INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
+VALUES ('01001-000', 'Rua da Origem', 'São Paulo', 'SP', 'Centro', '123', 'PICK_UP', 1);
+
+-- Inserir o endereço de destino
+INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
+VALUES ('20001-000', 'Avenida do Destino', 'Rio de Janeiro', 'RJ', 'Copacabana', '456', 'PICK_OFF', 1);
+
+INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
+VALUES ('30130-010', 'Rua dos Sonhos', 'Belo Horizonte', 'MG', 'Centro', '123', 'PICK_OFF', 1);
+
+-- Inserir a viagem associada ao usuário (user_id = 1)
+INSERT INTO travels (status, user_id, renavam, space, departure_date, departure_time, origin_id, destination_id, distance, duration)
+VALUES (true, 1, '98765432109', 4, '2024-09-05', '2024-09-05 14:00:00', 1, 2, '200 km', '3 horas');
+INSERT INTO travels (status, user_id, renavam, space, departure_date, departure_time, origin_id, destination_id, distance, duration)
+VALUES (true, 1, '98765432109', 3, '2024-09-16', '2024-09-16 16:00:00', 3, 2, '150 km', '2 horas');
+
+SELECT * FROM users WHERE email = 'vitor@email.com';
+SELECT * FROM get_travels_by_user_id(1);

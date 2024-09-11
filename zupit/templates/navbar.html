@@ -13,10 +13,10 @@
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
-            position: fixed;
+            position: fixed; /* Mantém a navbar sempre visível */
             top: 0;
             width: 100%;
-            z-index: 9999; /* Aumenta o z-index da navbar */
+            z-index: 9999; /* Garante que a navbar esteja acima de outros elementos */
         }
 
         .navbar-logo{
@@ -69,14 +69,14 @@
         }
 
         .dropdown {
-            display: none; /* Esconde o dropdown inicialmente */
+            display: none;
             position: absolute;
             top: 100%;
             right: 0;
             background-color: #f9f9f9;
             min-width: 160px;
             box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            z-index: 99999; /* Aumenta o z-index do dropdown para garantir sobreposição */
+            z-index: 99999; /* Maior que o z-index da navbar */
         }
 
         .dropdown a {
@@ -93,6 +93,20 @@
         /* Mostra o dropdown ao passar o mouse */
         .navbar-links li:hover .dropdown {
             display: block;
+        }
+
+        .navbar-dropdown {
+            position: absolute;
+            top: 100%; /* Para aparecer logo abaixo do ícone */
+            right: 0;
+            background-color: white;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000; /* Ajuste o valor para garantir que se sobreponha */
+            display: none; /* Inicia oculto */
+        }
+
+        .navbar-links:hover .navbar-dropdown {
+            display: block; /* Mostra o dropdown ao passar o mouse */
         }
 
         /* ICON */
