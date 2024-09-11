@@ -3,7 +3,6 @@ from typing import Optional
 
 from pydantic import BaseModel, model_validator
 
-from zupit.service.travels_crud import get_distance
 
 class Address(BaseModel):
     cep: str
@@ -28,6 +27,7 @@ class Travel(BaseModel):
 
     @model_validator(mode='after')
     def calculate_metrics(self):
+        from zupit.service.travels_crud import get_distance
         origin = self.pick_up.cep
         destination = self.pick_off.cep
 
