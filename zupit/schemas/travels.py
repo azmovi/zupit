@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -18,36 +18,55 @@ class Address(BaseModel):
     user_id: int
 
 
+class Origin(BaseModel):
+    address: Address
+    departure: datetime
+    space: int
+
+
+class Middle(BaseModel):
+    address: Address
+    duration: int
+    distance: str
+    space: int
+    price: float
+    origin_id: int
+
+
+class Destination(BaseModel):
+    address: Address
+    arrival: datetime
+    distance: str
+    price: float
+    origin_id: Optional[int] = Field(default_factory=None)
+    middle_id: Optional[int] = Field(default_factory=None)
+
+
 class Travel(BaseModel):
-    status: bool = Field(default_factory=lambda: True)
     user_id: int
     renavam: str
     space: int
-    middle_space: int
     departure: datetime
-    pick_up: Address
+    origin: Address
     middle: Optional[Address] = Field(default=None)
-    pick_off: Address
-    middle_distace: Optional[str] = Field(default=None)
+    destination: Address
+    middle_distance: Optional[str] = Field(default=None)
     middle_duration: Optional[int] = Field(default=None)
     destination_distance: Optional[str] = Field(default=None)
     destination_duration: Optional[int] = Field(default=None)
-    middle_arrival: Optional[datetime] = Field(default=None)
-    destination_arrival: Optional[datetime] = Field(default=None)
-    price: Optional[float] = Field(default=None)
 
     @model_validator(mode='after')
     def calculate_metrics(self):
-        origin = self.pick_up.cep
+        origin = self.origin.cep
         middle = None
         if self.middle:
             middle = self.middle.cep
-        destination = self.pick_off.cep
+        destination = self.destination.cep
 
         result = get_distance(origin, destination, middle)
         if result:
             if middle_results := result.get('middle', None):
-                self.middle_distace, self.middle_duration = middle_results
+                self.middle_distance, self.middle_duration = middle_results
             if destination_results := result.get('destination', None):
                 (
                     self.destination_distance,
@@ -57,10 +76,12 @@ class Travel(BaseModel):
             raise ValueError('Invalid cep')
         return self
 
-    @model_validator(mode='after')
-    def arrival_previst(self):
-        if self.destination_duration is not None:
-            self.arrival = self.departure + timedelta(
-                seconds=self.destination_duration
-            )
-        return self
+
+class TravelPublic(BaseModel):
+    id: int
+    status: bool
+    user_id: int
+    renavam: str
+    origin_id: int
+    middle_id: Optional[int]
+    destination_id: int

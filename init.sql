@@ -352,84 +352,210 @@ CREATE FUNCTION get_address_by_id(
 ) RETURNS SETOF address
 LANGUAGE plpgsql
 AS $$
-DECLARE
 BEGIN
     RETURN QUERY
     SELECT *
     FROM address
-    WHERE id = p_id 
-    LIMIT 1;
+    WHERE id = p_id;
 END;
 $$;
 
+CREATE TABLE origins (
+    id SERIAL PRIMARY KEY,
+    address_id INTEGER NOT NULL,
+    space INTEGER NOT NULL,
+    departure TIMESTAMP NOT NULL,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE middles (
+    id SERIAL PRIMARY KEY,
+    address_id INTEGER NOT NULL,
+    space INTEGER NOT NULL,
+    duration INTEGER NOT NULL,
+    distance VARCHAR(100) NOT NULL,
+    origin_id INTEGER NOT NULL,
+    price FLOAT NOT NULL,
+    FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE destinations (
+    id SERIAL PRIMARY KEY,
+    address_id INTEGER NOT NULL,
+    duration INTEGER NOT NULL,
+    distance VARCHAR(100) NOT NULL,
+    price FLOAT NOT NULL,
+    origin_id INTEGER,
+    middle_id INTEGER,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (middle_id) REFERENCES middles(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
 CREATE TABLE travels (
     id SERIAL PRIMARY KEY,
     status BOOLEAN NOT NULL,
     user_id INTEGER NOT NULL,
     renavam VARCHAR(11) NOT NULL,
-    space INTEGER NOT NULL,
     origin_id INTEGER NOT NULL,
+    middle_id INTEGER,
     destination_id INTEGER NOT NULL,
-    distance VARCHAR(50) NOT NULL,
-    departure TIMESTAMP NOT NULL,
-    price FLOAT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (origin_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (middle_id) REFERENCES middles(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE FUNCTION valid_travel(
-    p_user_id INTEGER,
-    p_departure TIMESTAMP,
-    p_arrival TIMESTAMP
-) RETURNS BOOLEAN
+CREATE FUNCTION create_origin(
+    p_address_id INTEGER,
+    p_space INTEGER,
+    p_departure TIMESTAMP WITH TIME ZONE
+) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    is_valid BOOLEAN := TRUE;
+    v_id INTEGER;
 BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM travels 
-        WHERE user_id = p_user_id AND status = TRUE 
-        AND (
-            (p_arrival > departure AND p_arrival < arrival)
-            OR (p_departure < arrival and p_departure > departure)
-        )
-    ) THEN 
-        is_valid := FALSE;
-    END IF;
+    INSERT INTO origins(address_id, space, departure)
+    VALUES(p_address_id, p_space, p_departure)
+    RETURNING id INTO v_id;
 
-    RETURN is_valid;
+    RETURN v_id;
 END;
 $$;
 
--- self.price = 30 + 0.25 * distance
+CREATE FUNCTION create_middle(
+    p_address_id INTEGER,
+    p_space INTEGER,
+    p_duration INTEGER,
+    p_distance VARCHAR(100),
+    p_origin_id INTEGER
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_id INTEGER;
+    p_price FLOAT;
+BEGIN
+    p_price := 35 + (p_duration / 3600.0) * 10;
+    
+    INSERT INTO middles(address_id, space, duration, distance, price, origin_id)
+    VALUES(p_address_id, p_space, p_duration, p_distance, p_price, p_origin_id)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;
+
+CREATE FUNCTION create_destination(
+    p_address_id INTEGER,
+    p_duration INTEGER,
+    p_distance VARCHAR(100),
+    p_origin_id INTEGER,
+    p_middle_id INTEGER
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_id INTEGER;
+    p_price FLOAT;
+BEGIN
+    p_price := 35 + (p_duration / 3600.0) * 10;
+    
+    INSERT INTO destinations(address_id, duration, distance, price, origin_id, middle_id)
+    VALUES(p_address_id, p_duration, p_distance, p_price, p_origin_id, p_middle_id)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;
+
+CREATE FUNCTION _create_travel(
+    p_origin_address_id INTEGER,
+    p_space INTEGER,
+    p_origin_departure TIMESTAMP WITH TIME ZONE,
+    p_middle_address_id INTEGER,
+    p_middle_duration INTEGER,
+    p_middle_distance VARCHAR(100),
+    p_destination_address_id INTEGER,
+    p_destination_duration INTEGER,
+    p_destination_distance VARCHAR(100)
+) RETURNS TABLE(origin_id INTEGER, middle_id INTEGER, destination_id INTEGER)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_origin_id INTEGER;
+    v_middle_id INTEGER;
+    v_destination_id INTEGER;
+BEGIN
+    v_origin_id := create_origin(p_origin_address_id, p_space, p_origin_departure);
+    
+    IF p_middle_address_id IS NOT NULL THEN
+        v_middle_id := create_middle(p_middle_address_id, p_space, p_middle_duration, p_middle_distance, v_origin_id);
+    ELSE
+        v_middle_id := NULL;
+    END IF;
+
+    v_destination_id := create_destination(p_destination_address_id, p_destination_duration, p_destination_distance, v_origin_id, v_middle_id);
+
+    RETURN QUERY SELECT v_origin_id, v_middle_id, v_destination_id;
+END;
+$$;
 
 CREATE FUNCTION create_travel(
     p_user_id INTEGER,
     p_renavam VARCHAR,
     p_space INTEGER,
-    p_departure TIMESTAMP,
-    p_origin_id INTEGER,
-    p_middle_id INTEGER,
+    p_origin_address_id INTEGER,
+    p_origin_departure TIMESTAMP WITH TIME ZONE,
+    p_middle_address_id INTEGER,
+    p_middle_duration INTEGER,
     p_middle_distance VARCHAR,
-    p_middle_arrival TIMESTAMP,
-    p_destination_id INTEGER,
-    p_destination_distance VARCHAR,
-    p_destination_arrival TIMESTAMP,
-) RETURNS VOID
+    p_destination_address_id INTEGER,
+    p_destination_duration INTEGER,
+    p_destination_distance VARCHAR
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_origin_id INTEGER;
+    v_middle_id INTEGER;
+    v_destination_id INTEGER;
+    v_id INTEGER;
+BEGIN
+    SELECT origin_id, middle_id, destination_id INTO
+        v_origin_id, v_middle_id, v_destination_id
+    FROM _create_travel(
+        p_origin_address_id,
+        p_space,
+        p_origin_departure,
+        p_middle_address_id,
+        p_middle_duration,
+        p_middle_distance,
+        p_destination_address_id,
+        p_destination_duration,
+        p_destination_distance
+    );
+
+    INSERT INTO travels(status, user_id, renavam, origin_id, middle_id, destination_id)
+    VALUES (TRUE, p_user_id, p_renavam, v_origin_id, v_middle_id, v_destination_id)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;
+
+
+CREATE FUNCTION get_travel(
+    p_id INTEGER
+) RETURNS SETOF travels
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO travels(
-        status, user_id, renavam, space, departure, origin_id, destination_id, distance, arrival, price
-    )
-    VALUES (
-        p_status, p_user_id, p_renavam, p_space, p_departure, p_origin_id, p_destination_id, p_distance, p_arrival, p_price
-    );
+    RETURN QUERY
+    SELECT * FROM travels WHERE id = p_id;
 END;
 $$;
 

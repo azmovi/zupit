@@ -62,11 +62,7 @@ def get_distance(
             result['middle'] = results
         if results := get_outputs(middle, destination):
             result['destination'] = results
-    else:
-        if results := get_outputs(origin, destination):
-            result['destination'] = results
+    elif results := get_outputs(origin, destination):
+        result['destination'] = results
 
     return result
-
-
-print(get_distance('13560-049', '01313-020', '11040-050'))

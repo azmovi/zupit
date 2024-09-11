@@ -23,12 +23,11 @@
             const third = JSON.parse(sessionStorage.getItem("third"));
             const fourth = JSON.parse(sessionStorage.getItem("fourth"));
             const sixth = JSON.parse(sessionStorage.getItem("sixth"));
+
             const date = second['departure_date']
             const time = second['departure_time']
-            const timestamp = `${date}T${time}`;
+            let timestamp = `${date}T${time}`;
             timestamp = new Date(timestamp);
-
-            console.log(timestamp);
 
             document.getElementById('confirm').addEventListener('click', async function (event) {
                 event.preventDefault();
@@ -42,9 +41,9 @@
                         renavam: first['renavam'],
                         space: first['space'],
                         departure: timestamp,
-                        pick_up: third,
+                        origin: third,
                         middle: sixth,
-                        pick_off: fourth,
+                        destination: fourth,
                     }),
                 })
                     .then(response => {
