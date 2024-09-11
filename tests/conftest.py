@@ -12,7 +12,10 @@ from zupit.database import get_session
 from zupit.router.drivers import get_driver
 from zupit.schemas.cars import Car
 from zupit.schemas.drivers import Driver
-from zupit.schemas.users import Public
+from zupit.schemas.travels import Address
+from zupit.schemas.users import Gender, Nationality, Public, User
+from zupit.service.travels_crud import create_address_db, get_address_db
+from zupit.service.users_crud import create_user_db, get_user_db
 
 
 @pytest.fixture(scope='session')
@@ -69,6 +72,23 @@ def user(client) -> Public:
 
 
 @pytest.fixture
+def user2(session) -> Public:
+    user2 = User(
+        name='Vitor',
+        email='vitor@email.com',
+        password='456',
+        birthday='2002-03-02',
+        sex=Gender('MAN'),
+        nationality=Nationality('BRAZILIAN'),
+        cpf='98765432144',
+    )
+    id = create_user_db(user2, session)
+    user_db = get_user_db(id, session)
+
+    return user_db
+
+
+@pytest.fixture
 def driver(client, user, session) -> Optional[Driver]:
     driver = {'user_id': user.id, 'cnh': '123456789', 'preferences': 'xpto'}
 
@@ -94,7 +114,7 @@ def car1(client, user) -> Car:
 @pytest.fixture
 def car2(client, user) -> Car:
     car = {
-        'renavam': '12345671920',
+        'renavam': '12345671929',
         'user_id': user.id,
         'brand': 'fiat',
         'model': 'argo',
@@ -104,3 +124,39 @@ def car2(client, user) -> Car:
 
     client.post('/cars', data=car)
     return Car(**car)
+
+
+@pytest.fixture
+def pick_up(session, user):
+    address = Address(
+        cep='68015-540',
+        street='Beco São Carlos',
+        district='Urumari',
+        city='Santarém',
+        state='PA',
+        house_number='1234',
+        direction='PICK_UP',
+        user_id=user.id,
+    )
+    id = create_address_db(session, address)
+    address_db = get_address_db(session, id)
+
+    return address_db
+
+
+@pytest.fixture
+def pick_off(session, user):
+    address = Address(
+        cep='74223-055',
+        street='Rua T 36',
+        district='Setor Bueno',
+        city='Goiânia',
+        state='GO',
+        house_number='4321',
+        direction='PICK_OFF',
+        user_id=user.id,
+    )
+    id = create_address_db(session, address)
+    address_db = get_address_db(session, id)
+
+    return address_db

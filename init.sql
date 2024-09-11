@@ -216,14 +216,13 @@ $$;
 ---------------------------Caronista-----------------------------
 -----------------------------------------------------------------
 
-CREATE TABLE drivers(
-    cnh VARCHAR(9) PRIMARY KEY,
+CREATE TABLE drivers (
+    cnh VARCHAR(11) PRIMARY KEY,
     user_id INTEGER NOT NULL,
     rating FLOAT NOT NULL,
     preferences VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 
 CREATE FUNCTION create_driver(
     p_user_id INTEGER,
@@ -244,7 +243,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE FUNCTION get_driver(p_user_id INTEGER)
 RETURNS SETOF drivers
 LANGUAGE plpgsql
@@ -263,7 +261,7 @@ CREATE TABLE cars (
     brand VARCHAR(50) NOT NULL,
     model VARCHAR(50) NOT NULL,
     plate VARCHAR(7) NOT NULL,
-    color VARCHAR(50) NOT NULL, 
+    color VARCHAR(50) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -274,8 +272,7 @@ CREATE FUNCTION create_car(
     p_model VARCHAR(50),
     p_plate VARCHAR(7),
     p_color VARCHAR(50)
-)
-RETURNS VOID
+) RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -283,7 +280,6 @@ BEGIN
     VALUES (p_renavam, p_user_id, p_brand, p_model, p_plate, p_color);
 END;
 $$;
-
 
 CREATE FUNCTION get_car_by_renavam(p_renavam VARCHAR)
 RETURNS SETOF cars
@@ -298,7 +294,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE FUNCTION get_cars_by_user_id(p_user_id INTEGER)
 RETURNS SETOF cars
 LANGUAGE plpgsql
@@ -311,25 +306,64 @@ BEGIN
 END;
 $$;
 
-
 -----------------------------------------------------------------
 ---------------------------VIAGEM-------------------------------
 -----------------------------------------------------------------
-
 CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
 
 CREATE TABLE address (
     id SERIAL PRIMARY KEY,
-    cep VARCHAR(8) NOT NULL,
+    cep VARCHAR(9) NOT NULL,
     street VARCHAR(50) NOT NULL,
-    complement VARCHAR(50) NOT NULL,
-    city VARCHAR(50) not NULL,
-    state VARCHAR(2) not NULL,
-    house_number VARCHAR(50) not NULL,
-    district VARCHAR(50) not NULL
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(2) NOT NULL,
+    district VARCHAR(50) NOT NULL,
+    house_number VARCHAR(5) NOT NULL,
+    direction direction NOT NULL,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE travels(
+CREATE FUNCTION create_address(
+    p_cep VARCHAR,
+    p_street VARCHAR,
+    p_city VARCHAR,
+    p_state VARCHAR,
+    p_district VARCHAR,
+    p_house_number VARCHAR,
+    p_direction direction,
+    p_user_id INTEGER
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    address_id INTEGER;
+BEGIN
+    INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
+    VALUES (p_cep, p_street, p_city, p_state, p_district, p_house_number, p_direction, p_user_id)
+    RETURNING id INTO address_id;
+
+    RETURN address_id;
+END;
+$$;
+
+CREATE FUNCTION get_address_by_id(
+    p_id INTEGER
+) RETURNS SETOF address
+LANGUAGE plpgsql
+AS $$
+DECLARE
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM address
+    WHERE id = p_id 
+    LIMIT 1;
+END;
+$$;
+
+
+CREATE TABLE travels (
     id SERIAL PRIMARY KEY,
     status BOOLEAN NOT NULL,
     user_id INTEGER NOT NULL,
@@ -337,75 +371,135 @@ CREATE TABLE travels(
     space INTEGER NOT NULL,
     departure_date DATE NOT NULL,
     departure_time TIMESTAMP NOT NULL,
-    pick_up_id INTEGER NOT NULL,
+    origin_id INTEGER NOT NULL,
+    destination_id INTEGER NOT NULL,
+    distance VARCHAR(50) NOT NULL,
+    duration VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (origin_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-----------------------------------------------------------------
+---------------------------AVALIACAO-------------------------------
+-----------------------------------------------------------------
 
-CREATE FUNCTION create_travel(
-    p_name VARCHAR,
-    p_email VARCHAR,
-    p_password VARCHAR,
-    p_birthday DATE,
-    p_sex gender,
-    p_cpf VARCHAR
-) RETURNS SETOF user_public
+--criacao da tabela de avaliacao
+CREATE TYPE tipo_avaliacao AS ENUM ('CARONISTA', 'CARONEIRO');
+CREATE TYPE nota_avaliacao AS ENUM ('PESSIMO', 'RUIM', 'MEDIANO', 'BOM', 'OTIMO');
+CREATE TABLE Avalia (
+    id SERIAL PRIMARY KEY,
+    id_autor INTEGER NOT NULL,
+    id_destinatario INTEGER NOT NULL,
+    criacao TIMESTAMP NOT NULL,
+    tipo_de_avaliado tipo_avaliacao NOT NULL,
+    nota nota_avaliacao NOT NULL,
+    conteudo VARCHAR(255),
+    FOREIGN KEY (id_autor) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_destinatario) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+--função para criar uma avaliacao nova
+CREATE FUNCTION create_avaliacao(
+    p_id_autor INTEGER,
+    p_id_destinatario INTEGER,
+    p_tipo_de_avaliado tipo_avaliacao,
+    p_nota nota_avaliacao,
+    p_conteudo VARCHAR(255)
+) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
-DECLARE 
-    v_user_id INTEGER;
+DECLARE
+    v_id_avaliacao INTEGER;
 BEGIN
-    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
-    PERFORM _create_brazilian(p_cpf, v_user_id);
+    -- Insere a nova avaliação na tabela Avalia
+    INSERT INTO Avalia (id_autor, id_destinatario, criacao, tipo_de_avaliado, nota, conteudo)
+    VALUES (p_id_autor, p_id_destinatario, NOW(), p_tipo_de_avaliado, p_nota, p_conteudo)
+    RETURNING id INTO v_id_avaliacao;
 
-    RETURN QUERY 
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_cpf;
+    -- Retorna o ID da avaliação recém-criada
+    RETURN v_id_avaliacao;
 END;
 $$;
 
------------------------------------------------------------------
------------------------------Carro-------------------------------
------------------------------------------------------------------
-
-CREATE FUNCTION validate_and_notify_renavam() RETURNS trigger AS $$
-DECLARE
-    renavam TEXT;
-    soma INTEGER;
-    resto INTEGER;
-    digito_verificador INTEGER;
-    multiplicadores INTEGER[] := ARRAY[2, 3, 4, 5, 6, 7, 8, 9];
+--procedimento que mostra os detalhes dos usuarios que estavam em uma carona
+CREATE OR REPLACE FUNCTION get_trip_participants(
+    p_user_id INTEGER,  -- ID do usuário que está fazendo a consulta
+    p_travel_id INTEGER -- ID da viagem que se deseja consultar
+)
+RETURNS TABLE (
+    participant_id INTEGER,
+    name VARCHAR,
+    email VARCHAR,
+    gender gender,
+    birthday DATE
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
-    renavam := NEW.renavam;
+    -- Retornar detalhes de todos os participantes da viagem especificada
+    RETURN QUERY
+    SELECT u.id AS participant_id,
+           u.name,
+           u.email,
+           u.sex AS gender,
+           u.birthday
+    FROM users u
+    INNER JOIN travels t ON u.id = t.user_id
+    WHERE t.id = p_travel_id
+      AND u.id != p_user_id;
+END;
+$$;
 
-    -- Verifica se o RENAVAM tem 11 dígitos numéricos
-    IF length(renavam) != 11 OR renavam ~ '\\D' THEN
-        RAISE EXCEPTION 'RENAVAM deve ter 11 dígitos numéricos';
-    END IF;
+--funcao que atualiza as avaliacoes medias de um usuario
+CREATE OR REPLACE FUNCTION atualizar_avaliacao_media()
+RETURNS TRIGGER AS $$
+DECLARE
+    nova_media FLOAT;
+BEGIN
+    -- Calcular a nova média das avaliações para o usuário avaliado
+    SELECT AVG(CASE
+                 WHEN nota = 'PESSIMO' THEN 1
+                 WHEN nota = 'RUIM' THEN 2
+                 WHEN nota = 'MEDIANO' THEN 3
+                 WHEN nota = 'BOM' THEN 4
+                 WHEN nota = 'OTIMO' THEN 5
+               END) INTO nova_media
+    FROM Avalia
+    WHERE id_destinatario = NEW.id_destinatario;
 
-    -- Cálculo do dígito verificador
-    soma := 0;
-    FOR i IN 2..11 LOOP
-        soma := soma + (cast(substring(renavam from 11 - i + 1 for 1) as integer) * multiplicadores[(i - 1) % 8 + 1]);
-    END LOOP;
-
-    resto := soma % 11;
-    digito_verificador := CASE 
-        WHEN resto >= 2 THEN 11 - resto
-        ELSE 0
-    END;
-
-    -- Compara o dígito verificador calculado com o fornecido
-    IF digito_verificador != cast(substring(renavam from 1 for 1) as integer) THEN
-        RAISE EXCEPTION 'RENAVAM inválido';
-    END IF;
-
-    -- Notifica que o RENAVAM foi validado com sucesso
-    PERFORM pg_notify('renavam_validation', 'RENAVAM ' || renavam || ' validado com sucesso.');
+    -- Atualizar a coluna de avaliação média do usuário
+    UPDATE users
+    SET avaliacao_media = nova_media
+    WHERE id = NEW.id_destinatario;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER renavam_validation_trigger
-AFTER INSERT OR UPDATE ON cars
+
+--trigger ativado apos uma avaliacao ser feita para atualizar a avaliacao media de um usuario
+CREATE TRIGGER trigger_atualizar_avaliacao_media
+AFTER INSERT ON Avalia
 FOR EACH ROW
-EXECUTE FUNCTION validate_and_notify_renavam();
+EXECUTE FUNCTION atualizar_avaliacao_media();
+
+--view dos detalhes de uma avaliacao feita
+CREATE VIEW view_detalhes_avaliacoes AS
+SELECT
+    a.id AS avaliacao_id,
+    a.criacao AS data_avaliacao,
+    u_autor.name AS nome_autor,
+    u_autor.email AS email_autor,
+    u_destinatario.name AS nome_destinatario,
+    u_destinatario.email AS email_destinatario,
+    a.tipo_de_avaliado AS tipo_avaliacao,
+    a.nota AS nota_avaliacao,
+    a.conteudo AS conteudo_avaliacao
+FROM
+    Avalia a
+JOIN
+    users u_autor ON a.id_autor = u_autor.id
+JOIN
+    users u_destinatario ON a.id_destinatario = u_destinatario.id;
