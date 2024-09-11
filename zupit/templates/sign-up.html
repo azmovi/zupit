@@ -20,10 +20,16 @@
     
             <input type="email" id="email" placeholder="E-mail" name="email" required><br><br>
     
-            <input type="password" id="password" placeholder="Senha" name="password" required><br><br>
+            <input type="password" id="password" placeholder="Senha" name="password" pattern=".{7,}" title="A senha deve ter pelo menos 7 caracteres" required><br><br>
     
             <label for="birthday">Data de Nascimento:</label>
             <input type="date" id="birthday" name="birthday" required><br><br>
+
+            <script>
+                var today = new Date().toISOString().split('T')[0];
+                document.getElementById("birthday").setAttribute('max', today);
+            </script>
+
     
             <label for="sex">Sexo:</label>
             <select id="sex" name="sex">
