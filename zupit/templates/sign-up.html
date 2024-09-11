@@ -26,8 +26,12 @@
             <input type="date" id="birthday" name="birthday" required><br><br>
 
             <script>
-                var today = new Date().toISOString().split('T')[0];
-                document.getElementById("birthday").setAttribute('max', today);
+                function getMaxDate() {
+                    var today = new Date();
+                    today.setFullYear(today.getFullYear() - 16);
+                    return today.toISOString().split('T')[0];
+                }
+                document.getElementById('birthday').setAttribute('max', getMaxDate());
             </script>
 
     
