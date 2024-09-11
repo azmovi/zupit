@@ -31,20 +31,22 @@
 
             document.getElementById('confirm').addEventListener('click', async function (event) {
                 event.preventDefault();
+                const data = {
+                    user_id: first['user_id'],
+                    renavam: first['renavam'],
+                    space: first['space'],
+                    departure: timestamp,
+                    origin: third,
+                    middle: sixth,
+                    destination: fourth,
+                }
+                console.log("Request Body:", JSON.stringify(data));
                 fetch("/travels/", {
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        user_id: first['user_id'],
-                        renavam: first['renavam'],
-                        space: first['space'],
-                        departure: timestamp,
-                        origin: third,
-                        middle: sixth,
-                        destination: fourth,
-                    }),
+                    body: JSON.stringify(data),
                 })
                     .then(response => {
                         if (!response.ok) {

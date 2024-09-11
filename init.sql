@@ -364,7 +364,6 @@ CREATE TABLE origins (
     id SERIAL PRIMARY KEY,
     address_id INTEGER NOT NULL,
     space INTEGER NOT NULL,
-    departure TIMESTAMP NOT NULL,
     FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -398,9 +397,12 @@ CREATE TABLE travels (
     status BOOLEAN NOT NULL,
     user_id INTEGER NOT NULL,
     renavam VARCHAR(11) NOT NULL,
+    departure TIMESTAMP WITH TIME ZONE NOT NULL,
     origin_id INTEGER NOT NULL,
     middle_id INTEGER,
     destination_id INTEGER NOT NULL,
+    arrival TIMESTAMP WITH TIME ZONE NOT NULL,
+    involved INTEGER[] CHECK (array_length(involved, 1) <= 4),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -410,16 +412,15 @@ CREATE TABLE travels (
 
 CREATE FUNCTION create_origin(
     p_address_id INTEGER,
-    p_space INTEGER,
-    p_departure TIMESTAMP WITH TIME ZONE
+    p_space INTEGER
 ) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
     v_id INTEGER;
 BEGIN
-    INSERT INTO origins(address_id, space, departure)
-    VALUES(p_address_id, p_space, p_departure)
+    INSERT INTO origins(address_id, space)
+    VALUES(p_address_id, p_space)
     RETURNING id INTO v_id;
 
     RETURN v_id;
@@ -475,7 +476,6 @@ $$;
 CREATE FUNCTION _create_travel(
     p_origin_address_id INTEGER,
     p_space INTEGER,
-    p_origin_departure TIMESTAMP WITH TIME ZONE,
     p_middle_address_id INTEGER,
     p_middle_duration INTEGER,
     p_middle_distance VARCHAR(100),
@@ -490,7 +490,7 @@ DECLARE
     v_middle_id INTEGER;
     v_destination_id INTEGER;
 BEGIN
-    v_origin_id := create_origin(p_origin_address_id, p_space, p_origin_departure);
+    v_origin_id := create_origin(p_origin_address_id, p_space);
     
     IF p_middle_address_id IS NOT NULL THEN
         v_middle_id := create_middle(p_middle_address_id, p_space, p_middle_duration, p_middle_distance, v_origin_id);
@@ -504,12 +504,37 @@ BEGIN
 END;
 $$;
 
+
+CREATE FUNCTION valid_travel(
+    p_user_id INTEGER,
+    p_departure TIMESTAMP WITH TIME ZONE,
+    p_arrival TIMESTAMP WITH TIME ZONE 
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    is_valid BOOLEAN := TRUE;
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM travels
+        WHERE user_id = p_user_id AND status = TRUE
+        AND (
+            (p_departure < arrival AND p_arrival > departure)
+        )
+    ) THEN
+        is_valid := FALSE;
+    END IF;
+    RETURN is_valid;
+END;
+$$;
+
 CREATE FUNCTION create_travel(
     p_user_id INTEGER,
     p_renavam VARCHAR,
     p_space INTEGER,
+    p_departure TIMESTAMP WITH TIME ZONE,
     p_origin_address_id INTEGER,
-    p_origin_departure TIMESTAMP WITH TIME ZONE,
     p_middle_address_id INTEGER,
     p_middle_duration INTEGER,
     p_middle_distance VARCHAR,
@@ -524,13 +549,13 @@ DECLARE
     v_middle_id INTEGER;
     v_destination_id INTEGER;
     v_id INTEGER;
+    v_arrival TIMESTAMP WITH TIME ZONE;
 BEGIN
     SELECT origin_id, middle_id, destination_id INTO
         v_origin_id, v_middle_id, v_destination_id
     FROM _create_travel(
         p_origin_address_id,
         p_space,
-        p_origin_departure,
         p_middle_address_id,
         p_middle_duration,
         p_middle_distance,
@@ -538,12 +563,16 @@ BEGIN
         p_destination_duration,
         p_destination_distance
     );
+    v_arrival := p_departure + ((COALESCE(p_middle_duration, 0) + COALESCE(p_destination_duration, 0)) * INTERVAL '1 second');
 
-    INSERT INTO travels(status, user_id, renavam, origin_id, middle_id, destination_id)
-    VALUES (TRUE, p_user_id, p_renavam, v_origin_id, v_middle_id, v_destination_id)
-    RETURNING id INTO v_id;
-
-    RETURN v_id;
+    IF valid_travel(p_user_id, p_departure, v_arrival) THEN
+        INSERT INTO travels(status, user_id, renavam, departure, origin_id, middle_id, destination_id, arrival, )
+        VALUES (TRUE, p_user_id, p_renavam, p_departure, v_origin_id, v_middle_id, v_destination_id, v_arrival)
+        RETURNING id INTO v_id;
+        RETURN v_id;
+    ELSE
+        RAISE EXCEPTION 'INVALID TRAVEL';
+    END IF;
 END;
 $$;
 
@@ -558,6 +587,71 @@ BEGIN
     SELECT * FROM travels WHERE id = p_id;
 END;
 $$;
+
+CREATE FUNCTION get_travel_by_user_id(
+    p_user_id INTEGER
+) RETURNS TABLE (
+    travel_id INTEGER,
+    status TEXT,
+    user_id INTEGER,
+    renavam TEXT,
+    departure TIMESTAMP WITH TIME ZONE,
+    origin_address_id INTEGER,
+    origin_space TEXT,
+    origin_address TEXT,
+    middle_address_id INTEGER,
+    middle_space TEXT,
+    middle_duration INTERVAL,
+    middle_distance FLOAT,
+    middle_price NUMERIC,
+    middle_address TEXT,
+    destination_address_id INTEGER,
+    destination_duration INTERVAL,
+    destination_distance FLOAT,
+    destination_price NUMERIC,
+    destination_address TEXT,
+    arrival TIMESTAMP WITH TIME ZONE,
+    involved TEXT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        t.id AS travel_id,
+        t.status,
+        t.user_id,
+        t.renavam,
+        t.departure,
+        o.address_id AS origin_address_id,
+        o.space AS origin_space,
+        a1.address AS origin_address,
+        m.address_id AS middle_address_id,
+        m.space AS middle_space,
+        m.duration AS middle_duration,
+        m.distance AS middle_distance,
+        m.price AS middle_price,
+        a2.address AS middle_address,
+        d.address_id AS destination_address_id,
+        d.duration AS destination_duration,
+        d.distance AS destination_distance,
+        d.price AS destination_price,
+        a3.address AS destination_address,
+        t.arrival,
+        t.involved
+    FROM 
+        travels t
+    LEFT JOIN origins o ON t.origin_id = o.id
+    LEFT JOIN address a1 ON o.address_id = a1.id
+    LEFT JOIN middles m ON t.middle_id = m.id
+    LEFT JOIN address a2 ON m.address_id = a2.id
+    LEFT JOIN destinations d ON t.destination_id = d.id
+    LEFT JOIN address a3 ON d.address_id = a3.id
+    WHERE t.user_id = p_user_id;
+END;
+$$;
+
+
 
 -----------------------------------------------------------------
 ---------------------------AVALIACAO-------------------------------
@@ -681,3 +775,4 @@ JOIN
     users u_autor ON a.id_autor = u_autor.id
 JOIN
     users u_destinatario ON a.id_destinatario = u_destinatario.id;
+

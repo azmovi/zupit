@@ -6,106 +6,9 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Address, Travel, TravelPublic
+from zupit.schemas.travels import Address, Travel, TravelList, TravelPublic
 
 Session = Annotated[Session, Depends(get_session)]
-
-
-# def valid_travel(
-#     session: Session,  # type: ignore
-#     travel: Travel,
-# ) -> bool:
-#     sql = text('SELECT * FROM valid_travel(:user_id, :departure, :arrival)')
-#     try:
-#         result = session.execute(
-#             sql,
-#             {
-#                 'user_id': travel.user_id,
-#                 'departure': travel.departure,
-#                 'arrival': travel.arrival,
-#             },
-#         )
-#         session.commit()
-#         return result.fetchone()[0]
-#     except Exception:
-#         session.rollback()
-#         raise HTTPException(
-#             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
-#         )
-
-
-def create_travel_db(
-    session: Session,  # type: ignore
-    travel: Travel,
-) -> int:
-    middle_address_id = None
-    origin_address_id = create_address_db(session, travel.origin)
-    if travel.middle:
-        middle_address_id = create_address_db(session, travel.middle)
-    destination_address_id = create_address_db(session, travel.destination)
-
-    sql = text(
-        """
-    SELECT * FROM create_travel(
-        :user_id,
-        :renavam,
-        :space,
-        :origin_address_id,
-        :origin_departure,
-        :middle_address_id,
-        :middle_duration,
-        :middle_distance,
-        :destination_address_id,
-        :destination_duration,
-        :destination_distance
-    )
-    """
-    )
-    try:
-        result = session.execute(
-            sql,
-            {
-                'user_id': travel.user_id,
-                'renavam': travel.renavam,
-                'space': travel.space,
-                'origin_address_id': origin_address_id,
-                'origin_departure': travel.departure,
-                'middle_address_id': middle_address_id,
-                'middle_duration': travel.middle_duration,
-                'middle_distance': travel.middle_distance,
-                'destination_address_id': destination_address_id,
-                'destination_duration': travel.destination_duration,
-                'destination_distance': travel.destination_distance,
-            },
-        )
-        id = result.fetchone()[0]
-        session.commit()
-        return id
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail=f'Input invalid {e}'
-        )
-
-
-def get_travel_db(
-    session: Session,
-    id: int,  # type: ignore
-) -> Optional[TravelPublic]:
-    sql = text('SELECT * FROM get_travel(:id)')
-    result = session.execute(sql, {'id': id}).fetchone()
-    session.commit()
-    if result:
-        return TravelPublic(
-            id=result[0],
-            status=result[1],
-            user_id=result[2],
-            renavam=result[3],
-            origin_id=result[4],
-            middle_id=result[5],
-            destination_id=result[6],
-        )
-    return None
 
 
 def create_address_db(
@@ -175,3 +78,88 @@ def get_address_db(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
+
+
+def create_travel_db(
+    session: Session,  # type: ignore
+    travel: Travel,
+) -> int:
+    middle_address_id = None
+    origin_address_id = create_address_db(session, travel.origin)
+    if travel.middle:
+        middle_address_id = create_address_db(session, travel.middle)
+    destination_address_id = create_address_db(session, travel.destination)
+
+    sql = text(
+        """
+        SELECT * FROM create_travel(
+            :user_id,
+            :renavam,
+            :space,
+            :departure,
+            :origin_address_id,
+            :middle_address_id,
+            :middle_duration,
+            :middle_distance,
+            :destination_address_id,
+            :destination_duration,
+            :destination_distance
+        )
+        """
+    )
+    try:
+        result = session.execute(
+            sql,
+            {
+                'user_id': travel.user_id,
+                'renavam': travel.renavam,
+                'space': travel.space,
+                'departure': travel.departure,
+                'origin_address_id': origin_address_id,
+                'middle_address_id': middle_address_id,
+                'middle_duration': travel.middle_duration,
+                'middle_distance': travel.middle_distance,
+                'destination_address_id': destination_address_id,
+                'destination_duration': travel.destination_duration,
+                'destination_distance': travel.destination_distance,
+            },
+        )
+        id = result.fetchone()[0]
+        session.commit()
+        return id
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=f'{e}')
+
+
+def get_travel_db(
+    session: Session,  # type: ignore
+    id: int,
+) -> Optional[TravelPublic]:
+    sql = text('SELECT * FROM get_travel(:id)')
+    result = session.execute(sql, {'id': id}).fetchone()
+    session.commit()
+    if result:
+        return TravelPublic(
+            id=result[0],
+            status=result[1],
+            user_id=result[2],
+            renavam=result[3],
+            departure=result[4],
+            origin_id=result[5],
+            middle_id=result[6],
+            destination_id=result[7],
+            arrival=result[8],
+        )
+    return None
+
+
+def get_travel_by_user_id(
+    session: Session, # type: ignore
+    user_id: int,
+):
+    sql = text('SELECT * FROM get_travel_by_user_id(:user_id)')
+    travels = session.execute(sql, {'user_id': user_id}).fetchall()
+    for travel in travels:
+        print(travel)
+    return 1

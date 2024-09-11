@@ -20,7 +20,6 @@ class Address(BaseModel):
 
 class Origin(BaseModel):
     address: Address
-    departure: datetime
     space: int
 
 
@@ -82,6 +81,11 @@ class TravelPublic(BaseModel):
     status: bool
     user_id: int
     renavam: str
+    departure: datetime
     origin_id: int
     middle_id: Optional[int]
     destination_id: int
+    arrival: datetime
+
+class TravelList(BaseModel):
+    pass
