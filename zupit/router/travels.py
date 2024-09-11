@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from zupit.database import get_session
 from zupit.schemas.travels import Travel
-from zupit.service.travels_crud import valid_travel, create_travel_db
+from zupit.service.travels_crud import create_travel_db, valid_travel
 
 router = APIRouter(prefix='/travels', tags=['travels'])
 
