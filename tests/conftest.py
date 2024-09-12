@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Generator, Optional
 
 import pytest
@@ -12,10 +13,14 @@ from zupit.database import get_session
 from zupit.router.drivers import get_driver
 from zupit.schemas.cars import Car
 from zupit.schemas.drivers import Driver
-from zupit.schemas.travels import Address
-from zupit.schemas.users import Gender, Nationality, Public, User
-from zupit.service.travels_crud import create_address_db, get_address_db
-from zupit.service.users_crud import create_user_db, get_user_db
+from zupit.schemas.travels import Address, Travel, TravelPublic
+from zupit.schemas.users import Public
+from zupit.service.travels_crud import (
+    create_address_db,
+    create_travel_db,
+    get_address_db,
+    get_travel_db,
+)
 
 
 @pytest.fixture(scope='session')
@@ -72,20 +77,19 @@ def user(client) -> Public:
 
 
 @pytest.fixture
-def user2(session) -> Public:
-    user2 = User(
-        name='Vitor',
-        email='vitor@email.com',
-        password='456',
-        birthday='2002-03-02',
-        sex=Gender('MAN'),
-        nationality=Nationality('BRAZILIAN'),
-        cpf='98765432144',
-    )
-    id = create_user_db(user2, session)
-    user_db = get_user_db(id, session)
+def user2(client) -> Public:
+    user = {
+        'name': 'Vitor',
+        'email': 'vitor@email.com',
+        'password': '456',
+        'birthday': '2002-03-02',
+        'sex': 'MAN',
+        'nationality': 'FOREIGNER',
+        'rnm': '12345678',
+    }
 
-    return user_db
+    response = client.post('/users', data=user)
+    return response.context['user']
 
 
 @pytest.fixture
@@ -127,36 +131,86 @@ def car2(client, user) -> Car:
 
 
 @pytest.fixture
-def pick_up(session, user):
-    address = Address(
-        cep='68015-540',
-        street='Beco São Carlos',
-        district='Urumari',
-        city='Santarém',
-        state='PA',
-        house_number='1234',
+def origin(session, user):
+    origin = Address(
+        cep='13560-049',
+        street='Rua Episcopal',
+        district='Centro',
+        city='São Carlos',
+        state='SP',
+        house_number='2423',
         direction='PICK_UP',
         user_id=user.id,
     )
-    id = create_address_db(session, address)
+    id = create_address_db(session, origin)
     address_db = get_address_db(session, id)
 
     return address_db
 
 
 @pytest.fixture
-def pick_off(session, user):
-    address = Address(
-        cep='74223-055',
-        street='Rua T 36',
-        district='Setor Bueno',
-        city='Goiânia',
-        state='GO',
-        house_number='4321',
-        direction='PICK_OFF',
+def middle(session, user):
+    middle = Address(
+        cep='01313-020',
+        street='Rua Doutor Plínio Barreto',
+        district='Bela Vista',
+        city='São Paulo',
+        state='SP',
+        house_number='123',
+        direction='MIDDLE',
         user_id=user.id,
     )
-    id = create_address_db(session, address)
+    id = create_address_db(session, middle)
     address_db = get_address_db(session, id)
 
     return address_db
+
+
+@pytest.fixture
+def destination(session, user):
+    destination = Address(
+        cep='11040-050',
+        street='Rua Conselheiro Ribas',
+        district='Embaré',
+        city='Santos',
+        state='SP',
+        house_number='234',
+        direction='PICK_OFF',
+        user_id=user.id,
+    )
+    id = create_address_db(session, destination)
+    address_db = get_address_db(session, id)
+
+    return address_db
+
+
+@pytest.fixture
+def travel(session, user, origin, destination, car1) -> Optional[TravelPublic]:
+    travel = Travel(
+        user_id=user.id,
+        renavam=car1.renavam,
+        space=4,
+        departure=datetime(2225, 2, 2, 5, 2, tzinfo=timezone.utc),
+        origin=origin,
+        middle=None,
+        destination=destination,
+    )
+    id = create_travel_db(session, travel)
+    return get_travel_db(session, id)
+
+
+@pytest.fixture
+def full_travel(
+    session, user, origin, middle, destination, car1
+) -> Optional[TravelPublic]:
+    travel = Travel(
+        user_id=user.id,
+        renavam=car1.renavam,
+        space=4,
+        departure=datetime(2225, 2, 2, 5, 2, tzinfo=timezone.utc),
+        origin=origin,
+        middle=middle,
+        destination=destination,
+    )
+    id = create_travel_db(session, travel)
+    return get_travel_db(session, id)

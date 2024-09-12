@@ -1,73 +1,29 @@
 from http import HTTPStatus
+from typing import Annotated, Optional
+
 from fastapi import Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Address, Travel, TravelList
+from zupit.schemas.travels import (
+    Address,
+    Destination,
+    Middle,
+    Origin,
+    Travel,
+    TravelPublic,
+)
+
+Session = Annotated[Session, Depends(get_session)]
 
 
-# Função para validar uma viagem
-def valid_travel(
-    session: Session, 
-    travel: Travel,
-) -> bool:
-    # Lógica de validação customizada aqui
-    return True
-
-
-# Função para criar uma viagem
-def create_travel_db(
-    travel: Travel,
-    session: Session = Depends(get_session),  # Injeção de dependência da sessão
-) -> bool:
-    origin_id = create_address_db(session, travel.pick_up)
-    destination_id = create_address_db(session, travel.pick_off)
-
-    sql = text("""
-    SELECT * FROM create_travel(
-        :user_id,
-        :renavam,
-        :space,
-        :departure_date,
-        :departure_time,
-        :origin_id,
-        :destination_id,
-        :distance,
-        :duration
-    )
-    """)
-    try:
-        result = session.execute(
-            sql,
-            {
-                'user_id': travel.user_id,
-                'renavam': travel.renavam,
-                'space': travel.space,
-                'departure_date': travel.departure_date,
-                'departure_time': travel.departure_time,
-                'origin_id': origin_id,
-                'destination_id': destination_id,
-                'distance': travel.distance,
-                'duration': travel.duration,
-            },
-        )
-        session.commit()
-        return result.rowcount > 0  # Retorna True se a operação foi bem-sucedida
-    except Exception:
-        session.rollback()
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
-        )
-
-
-# Função para criar um endereço
 def create_address_db(
+    session: Session,  # type: ignore
     address: Address,
-    session: Session = Depends(get_session),  # Injeção de dependência da sessão
 ) -> int:
-    sql = text("""
-        SELECT * FROM create_address(
+    sql = text(
+        """SELECT * FROM create_address(
             :cep,
             :street,
             :city,
@@ -76,9 +32,9 @@ def create_address_db(
             :house_number,
             :direction,
             :user_id
-        )
-    """)
-    address_dict = address.dict()  # Converte o objeto Address para um dicionário
+        )"""
+    )
+    address_dict = address.model_dump()
     try:
         result = session.execute(sql, address_dict)
         address_id = result.fetchone()[0]
@@ -86,9 +42,10 @@ def create_address_db(
         if address_id:
             return address_id
         else:
+            session.rollback()
             raise HTTPException(
                 status_code=HTTPStatus.NOT_ACCEPTABLE,
-                detail='Address not created',
+                detail='Address not create',
             )
     except Exception:
         session.rollback()
@@ -97,40 +54,9 @@ def create_address_db(
         )
 
 
-# Função para obter viagens por usuário
-def get_travels_db(user_id: int, session: Session) -> TravelList:
-    try:
-        travel_list = []
-        sql = text('SELECT * FROM get_travels_by_user_id(:user_id)')
-        travels = session.execute(sql, {'user_id': user_id}).fetchall()
-        print(f"Travels fetched for user_id {user_id}: {travels}")  # Log dos dados
-        for travel in travels:
-            travel_example = Travel(
-                id=travel[0],
-                status=travel[1],
-                user_id=travel[2],
-                renavam=travel[3],
-                space=travel[4],
-                departure_date=travel[5],
-                departure_time=travel[6].time(),  # Extrai apenas o tempo do objeto datetime
-                pick_up=get_address_db(travel[7], session),  # Converte o ID para Address
-                pick_off=get_address_db(travel[8], session),  # Converte o ID para Address
-                distance=travel[9],
-                duration=travel[10],
-            )
-            travel_list.append(travel_example)
-
-        return TravelList(travels=travel_list)
-    except Exception as e:
-        print(f"Error fetching travels: {str(e)}")  # Log do erro
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
-# Função para obter um endereço por ID
 def get_address_db(
+    session: Session,  # type: ignore
     address_id: int,
-    session: Session = Depends(get_session),  # Injeção de dependência da sessão
 ) -> Address:
     sql = text('SELECT * FROM get_address_by_id(:id)')
     try:
@@ -159,3 +85,127 @@ def get_address_db(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
+
+
+def create_travel_db(
+    session: Session,  # type: ignore
+    travel: Travel,
+) -> int:
+    middle_address_id = None
+    origin_address_id = create_address_db(session, travel.origin)
+    if travel.middle:
+        middle_address_id = create_address_db(session, travel.middle)
+    destination_address_id = create_address_db(session, travel.destination)
+
+    sql = text(
+        """
+        SELECT * FROM create_travel(
+            :user_id,
+            :renavam,
+            :space,
+            :departure,
+            :origin_address_id,
+            :middle_address_id,
+            :middle_duration,
+            :middle_distance,
+            :destination_address_id,
+            :destination_duration,
+            :destination_distance
+        )
+        """
+    )
+    try:
+        result = session.execute(
+            sql,
+            {
+                'user_id': travel.user_id,
+                'renavam': travel.renavam,
+                'space': travel.space,
+                'departure': travel.departure,
+                'origin_address_id': origin_address_id,
+                'middle_address_id': middle_address_id,
+                'middle_duration': travel.middle_duration,
+                'middle_distance': travel.middle_distance,
+                'destination_address_id': destination_address_id,
+                'destination_duration': travel.destination_duration,
+                'destination_distance': travel.destination_distance,
+            },
+        )
+        id = result.fetchone()[0]
+        session.commit()
+        return id
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=f'{e}')
+
+
+def get_travel_db(
+    session: Session,  # type: ignore
+    id: int,
+) -> Optional[TravelPublic]:
+    sql = text('SELECT * FROM get_travel(:id)')
+    result = session.execute(sql, {'id': id}).fetchone()
+    session.commit()
+    return make_travel_public(result)
+
+
+def get_travel_by_user(
+    session: Session,  # type: ignore
+    user_id: int,
+):
+    sql = text('SELECT * FROM get_travel_by_user(:user_id)')
+    travels = session.execute(sql, {'user_id': user_id}).fetchall()
+    list_travel = []
+    for travel in travels:
+        list_travel.append(make_travel_public(travel))
+    return list_travel
+
+
+def make_travel_public(result) -> TravelPublic:
+    return TravelPublic(
+        id=result[0],
+        status=result[1],
+        user_id=result[2],
+        renavam=result[3],
+        departure=result[4],
+        origin=Origin(
+            space=result[5],
+            address=Address(
+                cep=result[6],
+                street=result[7],
+                city=result[8],
+                state=result[9],
+                district=result[10],
+                house_number=result[11],
+            ),
+        ),
+        middle=Middle(
+            space=result[12],
+            duration=result[13],
+            distance=result[14],
+            price=result[15],
+            address=Address(
+                cep=result[16],
+                street=result[17],
+                city=result[18],
+                state=result[19],
+                district=result[20],
+                house_number=result[21],
+            ),
+        ) if result[12] is not None else None,
+        destination=Destination(
+            duration=result[22],
+            distance=result[23],
+            price=result[24],
+            address=Address(
+                cep=result[25],
+                street=result[26],
+                city=result[27],
+                state=result[28],
+                district=result[29],
+                house_number=result[30],
+            ),
+        ),
+        arrival=result[31],
+        involved=result[32],
+    )

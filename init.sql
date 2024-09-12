@@ -307,9 +307,9 @@ END;
 $$;
 
 -----------------------------------------------------------------
----------------------------VIAGEM-------------------------------
+---------------------------VIAGEM--------------------------------
 -----------------------------------------------------------------
-CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF');
+CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF', 'MIDDLE');
 
 CREATE TABLE address (
     id SERIAL PRIMARY KEY,
@@ -352,64 +352,368 @@ CREATE FUNCTION get_address_by_id(
 ) RETURNS SETOF address
 LANGUAGE plpgsql
 AS $$
-DECLARE
 BEGIN
     RETURN QUERY
     SELECT *
     FROM address
-    WHERE id = p_id 
-    LIMIT 1;
+    WHERE id = p_id;
 END;
 $$;
 
+CREATE TABLE origins (
+    id SERIAL PRIMARY KEY,
+    address_id INTEGER NOT NULL,
+    space INTEGER NOT NULL,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE middles (
+    id SERIAL PRIMARY KEY,
+    address_id INTEGER NOT NULL,
+    space INTEGER NOT NULL,
+    duration INTEGER NOT NULL,
+    distance VARCHAR(100) NOT NULL,
+    origin_id INTEGER NOT NULL,
+    price FLOAT NOT NULL,
+    FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE destinations (
+    id SERIAL PRIMARY KEY,
+    address_id INTEGER NOT NULL,
+    duration INTEGER NOT NULL,
+    distance VARCHAR(100) NOT NULL,
+    price FLOAT NOT NULL,
+    origin_id INTEGER,
+    middle_id INTEGER,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (middle_id) REFERENCES middles(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
 CREATE TABLE travels (
     id SERIAL PRIMARY KEY,
     status BOOLEAN NOT NULL,
     user_id INTEGER NOT NULL,
     renavam VARCHAR(11) NOT NULL,
-    space INTEGER NOT NULL,
-    departure_date DATE NOT NULL,
-    departure_time TIMESTAMP NOT NULL,
+    departure TIMESTAMP WITH TIME ZONE NOT NULL,
     origin_id INTEGER NOT NULL,
+    middle_id INTEGER,
     destination_id INTEGER NOT NULL,
-    distance VARCHAR(50) NOT NULL,
-    duration VARCHAR(50) NOT NULL,
+    arrival TIMESTAMP WITH TIME ZONE NOT NULL,
+    involved INTEGER[] CHECK (array_length(involved, 1) <= 4),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (origin_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (destination_id) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (middle_id) REFERENCES middles(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE FUNCTION get_travels_by_user_id(p_user_id INTEGER)
-RETURNS SETOF travels
+CREATE FUNCTION create_origin(
+    p_address_id INTEGER,
+    p_space INTEGER
+) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_id INTEGER;
 BEGIN
-    RETURN QUERY
-    SELECT *
-    FROM travels
-    WHERE user_id = p_user_id;
+    INSERT INTO origins(address_id, space)
+    VALUES(p_address_id, p_space)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
 END;
 $$;
 
-CREATE FUNCTION get_user_by_travel(p_travel_id INTEGER)
-RETURNS SETOF user_public
+CREATE FUNCTION create_middle(
+    p_address_id INTEGER,
+    p_space INTEGER,
+    p_duration INTEGER,
+    p_distance VARCHAR(100),
+    p_origin_id INTEGER
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_id INTEGER;
+    p_price FLOAT;
+BEGIN
+    p_price := 35 + (p_duration / 3600.0) * 10;
+    
+    INSERT INTO middles(address_id, space, duration, distance, price, origin_id)
+    VALUES(p_address_id, p_space, p_duration, p_distance, p_price, p_origin_id)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;
+
+CREATE FUNCTION create_destination(
+    p_address_id INTEGER,
+    p_duration INTEGER,
+    p_distance VARCHAR(100),
+    p_origin_id INTEGER,
+    p_middle_id INTEGER
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_id INTEGER;
+    p_price FLOAT;
+BEGIN
+    p_price := 35 + (p_duration / 3600.0) * 10;
+    
+    INSERT INTO destinations(address_id, duration, distance, price, origin_id, middle_id)
+    VALUES(p_address_id, p_duration, p_distance, p_price, p_origin_id, p_middle_id)
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;
+
+CREATE FUNCTION _create_travel(
+    p_origin_address_id INTEGER,
+    p_space INTEGER,
+    p_middle_address_id INTEGER,
+    p_middle_duration INTEGER,
+    p_middle_distance VARCHAR(100),
+    p_destination_address_id INTEGER,
+    p_destination_duration INTEGER,
+    p_destination_distance VARCHAR(100)
+) RETURNS TABLE(origin_id INTEGER, middle_id INTEGER, destination_id INTEGER)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_origin_id INTEGER;
+    v_middle_id INTEGER;
+    v_destination_id INTEGER;
+BEGIN
+    v_origin_id := create_origin(p_origin_address_id, p_space);
+    
+    IF p_middle_address_id IS NOT NULL THEN
+        v_middle_id := create_middle(p_middle_address_id, p_space, p_middle_duration, p_middle_distance, v_origin_id);
+    ELSE
+        v_middle_id := NULL;
+    END IF;
+
+    v_destination_id := create_destination(p_destination_address_id, p_destination_duration, p_destination_distance, v_origin_id, v_middle_id);
+
+    RETURN QUERY SELECT v_origin_id, v_middle_id, v_destination_id;
+END;
+$$;
+
+
+CREATE FUNCTION valid_travel(
+    p_user_id INTEGER,
+    p_departure TIMESTAMP WITH TIME ZONE,
+    p_arrival TIMESTAMP WITH TIME ZONE 
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    is_valid BOOLEAN := TRUE;
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM travels
+        WHERE user_id = p_user_id AND status = TRUE
+        AND (
+            (p_departure < arrival AND p_arrival > departure)
+        )
+    ) THEN
+        is_valid := FALSE;
+    END IF;
+    RETURN is_valid;
+END;
+$$;
+
+CREATE FUNCTION create_travel(
+    p_user_id INTEGER,
+    p_renavam VARCHAR,
+    p_space INTEGER,
+    p_departure TIMESTAMP WITH TIME ZONE,
+    p_origin_address_id INTEGER,
+    p_middle_address_id INTEGER,
+    p_middle_duration INTEGER,
+    p_middle_distance VARCHAR,
+    p_destination_address_id INTEGER,
+    p_destination_duration INTEGER,
+    p_destination_distance VARCHAR
+) RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_origin_id INTEGER;
+    v_middle_id INTEGER;
+    v_destination_id INTEGER;
+    v_id INTEGER;
+    v_arrival TIMESTAMP WITH TIME ZONE;
+BEGIN
+    SELECT origin_id, middle_id, destination_id INTO
+        v_origin_id, v_middle_id, v_destination_id
+    FROM _create_travel(
+        p_origin_address_id,
+        p_space,
+        p_middle_address_id,
+        p_middle_duration,
+        p_middle_distance,
+        p_destination_address_id,
+        p_destination_duration,
+        p_destination_distance
+    );
+    v_arrival := p_departure + ((COALESCE(p_middle_duration, 0) + COALESCE(p_destination_duration, 0)) * INTERVAL '1 second');
+
+    IF valid_travel(p_user_id, p_departure, v_arrival) THEN
+        INSERT INTO travels(status, user_id, renavam, departure, origin_id, middle_id, destination_id, arrival, involved)
+        VALUES (TRUE, p_user_id, p_renavam, p_departure, v_origin_id, v_middle_id, v_destination_id, v_arrival, '{}')
+        RETURNING id INTO v_id;
+        RETURN v_id;
+    ELSE
+        RAISE EXCEPTION 'INVALID TRAVEL';
+    END IF;
+END;
+$$;
+
+CREATE TYPE travel_public AS (
+    travel_id INTEGER,
+    status BOOLEAN,
+    user_id INTEGER,
+    renavam VARCHAR,
+    departure TIMESTAMP WITH TIME ZONE,
+    origin_space INTEGER,
+    origin_cep VARCHAR,
+    origin_street VARCHAR,
+    origin_city VARCHAR,
+    origin_state VARCHAR,
+    origin_district VARCHAR,
+    origin_house_number VARCHAR,
+    middle_space INTEGER,
+    middle_duration INTEGER,
+    middle_distance VARCHAR,
+    middle_price FLOAT,
+    middle_cep VARCHAR,
+    middle_street VARCHAR,
+    middle_city VARCHAR,
+    middle_state VARCHAR,
+    middle_district VARCHAR,
+    middle_house_number VARCHAR,
+    destination_duration INTEGER,
+    destination_distance VARCHAR,
+    destination_price FLOAT,
+    destination_cep VARCHAR,
+    destination_street VARCHAR,
+    destination_city VARCHAR,
+    destination_state VARCHAR,
+    destination_district VARCHAR,
+    destination_house_number VARCHAR,
+    arrival TIMESTAMP WITH TIME ZONE,
+    involved INTEGER[]
+);
+
+CREATE FUNCTION get_travel(
+    p_id INTEGER
+) RETURNS SETOF travel_public
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT u.id,
-           u.name,
-           u.email,
-           u.birthday,
-           u.sex,
-           u.icon,
-           get_user_doc(u.id) -- Função auxiliar para obter o documento do usuário (CPF ou RNM)
-    FROM users u
-    INNER JOIN travels t ON u.id = t.user_id
-    WHERE t.id = p_travel_id
-    LIMIT 1;
+    SELECT
+        t.id,
+        t.status,
+        t.user_id,
+        t.renavam,
+        t.departure,
+        o.space,
+        ao.cep,
+        ao.street,
+        ao.city,
+        ao.state,
+        ao.district,
+        ao.house_number,
+        m.space,
+        m.duration,
+        m.distance,
+        m.price,
+        am.cep, 
+        am.street,
+        am.city,
+        am.state,
+        am.district,
+        am.house_number,
+        d.duration,
+        d.distance,
+        d.price,
+        ad.cep,
+        ad.street,
+        ad.city,
+        ad.state,
+        ad.district,
+        ad.house_number,
+        t.arrival,
+        t.involved
+    FROM travels t
+    LEFT JOIN origins o ON t.origin_id = o.id
+    LEFT JOIN address ao ON o.address_id = ao.id
+    LEFT JOIN middles m ON t.middle_id = m.id
+    LEFT JOIN address am ON m.address_id = am.id
+    LEFT JOIN destinations d ON t.destination_id = d.id
+    LEFT JOIN address ad ON d.address_id = ad.id
+    WHERE t.id = p_id;
+END;
+$$;
+
+CREATE FUNCTION get_travel_by_user(
+    p_user_id INTEGER
+) RETURNS SETOF travel_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        t.id,
+        t.status,
+        t.user_id,
+        t.renavam,
+        t.departure,
+        o.space,
+        ao.cep,
+        ao.street,
+        ao.city,
+        ao.state,
+        ao.district,
+        ao.house_number,
+        m.space,
+        m.duration,
+        m.distance,
+        m.price,
+        am.cep, 
+        am.street,
+        am.city,
+        am.state,
+        am.district,
+        am.house_number,
+        d.duration,
+        d.distance,
+        d.price,
+        ad.cep,
+        ad.street,
+        ad.city,
+        ad.state,
+        ad.district,
+        ad.house_number,
+        t.arrival,
+        t.involved
+    FROM travels t
+    LEFT JOIN origins o ON t.origin_id = o.id
+    LEFT JOIN address ao ON o.address_id = ao.id
+    LEFT JOIN middles m ON t.middle_id = m.id
+    LEFT JOIN address am ON m.address_id = am.id
+    LEFT JOIN destinations d ON t.destination_id = d.id
+    LEFT JOIN address ad ON d.address_id = ad.id
+    WHERE t.user_id = p_user_id;
+>>>>>>> master
 END;
 $$;
 
@@ -536,31 +840,3 @@ JOIN
     users u_autor ON a.id_autor = u_autor.id
 JOIN
     users u_destinatario ON a.id_destinatario = u_destinatario.id;
-
-INSERT INTO users (name, email, password, birthday, sex, user_status)
-VALUES ('Vitor', 'vitor@email.com', '456', '2002-03-02', 'MAN', true);
-
-INSERT INTO brazilians (cpf, user_id)
-VALUES ('98765432144', 1);
-INSERT INTO drivers (cnh, user_id, rating, preferences)
-VALUES ('123456789', 1, 5.0, 'Prefere rotas curtas e gosta de animais');
-INSERT INTO cars (renavam, user_id, brand, model, plate, color)
-VALUES ('98765432109', 1, 'Toyota', 'Corolla', 'ABC1234', 'Prata');
-INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
-VALUES ('01001-000', 'Rua da Origem', 'São Paulo', 'SP', 'Centro', '123', 'PICK_UP', 1);
-
--- Inserir o endereço de destino
-INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
-VALUES ('20001-000', 'Avenida do Destino', 'Rio de Janeiro', 'RJ', 'Copacabana', '456', 'PICK_OFF', 1);
-
-INSERT INTO address (cep, street, city, state, district, house_number, direction, user_id)
-VALUES ('30130-010', 'Rua dos Sonhos', 'Belo Horizonte', 'MG', 'Centro', '123', 'PICK_OFF', 1);
-
--- Inserir a viagem associada ao usuário (user_id = 1)
-INSERT INTO travels (status, user_id, renavam, space, departure_date, departure_time, origin_id, destination_id, distance, duration)
-VALUES (true, 1, '98765432109', 4, '2024-09-05', '2024-09-05 14:00:00', 1, 2, '200 km', '3 horas');
-INSERT INTO travels (status, user_id, renavam, space, departure_date, departure_time, origin_id, destination_id, distance, duration)
-VALUES (true, 1, '98765432109', 3, '2024-09-16', '2024-09-16 16:00:00', 3, 2, '150 km', '2 horas');
-
-SELECT * FROM users WHERE email = 'vitor@email.com';
-SELECT * FROM get_travels_by_user_id(1);
