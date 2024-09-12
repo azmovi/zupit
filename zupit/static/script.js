@@ -81,8 +81,9 @@ function get_travels(user_id) {
                         <td>${departureTime}</td>
                         <td>${travel.distance || "Distância não encontrada"}</td>
                         <td>${travel.duration || "Duração não encontrada"}</td>
-                        <td><a href="/trip-details/${travel.id}" class="button-details">Detalhes</a></td>
+                        <td><a href="/trip-participants/${travel.id}" class="button-details">Participantes</a></td>
                     `;
+                    console.log("id da viagem:", travel.id);
                     console.log("Linha adicionada à tabela:", row.innerHTML);
                     tableBody.appendChild(row);
                 });

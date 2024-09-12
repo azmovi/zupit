@@ -65,6 +65,22 @@ def previous_travels(
         )   
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
+@app.get('/trip-participants/{travel_id}', response_class=HTMLResponse)
+def trip_participants(
+    request: Request,
+    travel_id: int,  # Captura o travel_id da URL
+    session: Session,  # type: ignore
+):
+    if user := get_current_user(request, session):
+        # Por enquanto, não estamos utilizando o travel_id
+        return templates.TemplateResponse(
+            name='trip-participants.html',
+            context={'request': request, 'user': user, 'travel_id': travel_id},  # Inclui travel_id no contexto
+        )
+    
+    return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
+
+
 
 @app.get('/sign-up', response_class=HTMLResponse)
 def form_sign_up(request: Request):

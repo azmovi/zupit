@@ -393,6 +393,27 @@ BEGIN
 END;
 $$;
 
+CREATE FUNCTION get_user_by_travel(p_travel_id INTEGER)
+RETURNS SETOF user_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id,
+           u.name,
+           u.email,
+           u.birthday,
+           u.sex,
+           u.icon,
+           get_user_doc(u.id) -- Função auxiliar para obter o documento do usuário (CPF ou RNM)
+    FROM users u
+    INNER JOIN travels t ON u.id = t.user_id
+    WHERE t.id = p_travel_id
+    LIMIT 1;
+END;
+$$;
+
+
 -----------------------------------------------------------------
 ---------------------------AVALIACAO-------------------------------
 -----------------------------------------------------------------
