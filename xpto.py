@@ -1,7 +1,49 @@
 origin = '13560-049'
 middle = '01313-020'
 destination = '11040-050'
+"""
+    1,
+    True,
+    1,
+    '12345678900',
+    datetime.datetime(
+        2225, 2, 2, 5, 2, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')
+    ),
 
+    4,
+    '13560-049',
+    'Rua Episcopal',
+    'São Carlos',
+    'SP',
+    'Centro',
+    '2423',
+
+    4,
+    10646,
+    '235 km',
+    64.57222222222222,
+    '01313-020',
+    'Rua Doutor Plínio Barreto',
+    'São Paulo',
+    'SP',
+    'Bela Vista',
+    '123',
+    5432,
+    '84.3 km',
+    50.08888888888889,
+    '11040-050',
+    'Rua Conselheiro Ribas',
+    'Santos',
+    'SP',
+    'Embaré',
+    '234',
+    datetime.datetime(
+        2225, 2, 2, 9, 29, 58, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')
+    ),
+    [],
+"""
+
+#
 # (p_arrival > departure AND p_arrival < arrival)
 # OR (p_departure < arrival and p_departure > departure)
 

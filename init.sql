@@ -576,79 +576,81 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION get_travel(
-    p_id INTEGER
-) RETURNS TABLE (
+CREATE TYPE travel_public AS (
     travel_id INTEGER,
     status BOOLEAN,
     user_id INTEGER,
-    renavam VARCHAR(11),
+    renavam VARCHAR,
     departure TIMESTAMP WITH TIME ZONE,
     origin_space INTEGER,
-    origin_cep VARCHAR(9),
-    origin_street VARCHAR(50),
-    origin_city VARCHAR(50),
-    origin_state VARCHAR(2),
-    origin_district VARCHAR(50),
-    origin_house_number VARCHAR(5),
+    origin_cep VARCHAR,
+    origin_street VARCHAR,
+    origin_city VARCHAR,
+    origin_state VARCHAR,
+    origin_district VARCHAR,
+    origin_house_number VARCHAR,
     middle_space INTEGER,
     middle_duration INTEGER,
-    middle_distance VARCHAR(100),
+    middle_distance VARCHAR,
     middle_price FLOAT,
-    middle_cep VARCHAR(9),
-    middle_street VARCHAR(50),
-    middle_city VARCHAR(50),
-    middle_state VARCHAR(2),
-    middle_district VARCHAR(50),
-    middle_house_number VARCHAR(5),
+    middle_cep VARCHAR,
+    middle_street VARCHAR,
+    middle_city VARCHAR,
+    middle_state VARCHAR,
+    middle_district VARCHAR,
+    middle_house_number VARCHAR,
     destination_duration INTEGER,
-    destination_distance VARCHAR(100),
+    destination_distance VARCHAR,
     destination_price FLOAT,
-    destination_cep VARCHAR(9),
-    destination_street VARCHAR(50),
-    destination_city VARCHAR(50),
-    destination_state VARCHAR(2),
-    destination_district VARCHAR(50),
-    destination_house_number VARCHAR(5),
+    destination_cep VARCHAR,
+    destination_street VARCHAR,
+    destination_city VARCHAR,
+    destination_state VARCHAR,
+    destination_district VARCHAR,
+    destination_house_number VARCHAR,
     arrival TIMESTAMP WITH TIME ZONE,
     involved INTEGER[]
-)
+);
+
+CREATE FUNCTION get_travel(
+    p_id INTEGER
+) RETURNS SETOF travel_public
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        t.id AS travel_id,
+        t.id,
         t.status,
         t.user_id,
         t.renavam,
         t.departure,
-        o.space AS origin_space,
-        ao.cep AS origin_cep,
-        ao.street AS origin_street,
-        ao.city AS origin_city,
-        ao.state AS origin_state,
-        ao.district AS origin_district,
-        ao.house_number AS origin_house_number,
-        m.space AS middle_space,
-        m.duration AS middle_duration,
-        m.distance AS middle_distance,
-        m.price AS middle_price,
-        am.cep AS middle_cep,
-        am.street AS middle_street,
-        am.city AS middle_city,
-        am.state AS middle_state,
-        am.district AS middle_district,
-        am.house_number AS middle_house_number,
-        d.duration AS destination_duration,
-        d.distance AS destination_distance,
-        d.price AS destination_price,
-        ad.cep AS destination_cep,
-        ad.street AS destination_street,
-        ad.city AS destination_city,
-        ad.state AS destination_state,
-        ad.district AS destination_district,
-        ad.house_number AS destination_house_number,
+        o.space,
+        ao.cep,
+        ao.street,
+        ao.city,
+        ao.state,
+        ao.district,
+        ao.house_number,
+        m.space,
+        m.duration,
+        m.distance,
+        m.price,
+        am.cep, 
+        am.street,
+        am.city,
+        am.state,
+        am.district,
+        am.house_number,
+        d.duration,
+        d.distance,
+        d.price,
+        ad.cep,
+        ad.street,
+        ad.city,
+        ad.state,
+        ad.district,
+        ad.house_number,
         t.arrival,
         t.involved
     FROM travels t
@@ -662,70 +664,57 @@ BEGIN
 END;
 $$;
 
-
-CREATE FUNCTION get_travel_by_user_id(
+CREATE FUNCTION get_travel_by_user(
     p_user_id INTEGER
-) RETURNS TABLE (
-    travel_id INTEGER,
-    status TEXT,
-    user_id INTEGER,
-    renavam TEXT,
-    departure TIMESTAMP WITH TIME ZONE,
-    origin_address_id INTEGER,
-    origin_space TEXT,
-    origin_address TEXT,
-    middle_address_id INTEGER,
-    middle_space TEXT,
-    middle_duration INTERVAL,
-    middle_distance FLOAT,
-    middle_price NUMERIC,
-    middle_address TEXT,
-    destination_address_id INTEGER,
-    destination_duration INTERVAL,
-    destination_distance FLOAT,
-    destination_price NUMERIC,
-    destination_address TEXT,
-    arrival TIMESTAMP WITH TIME ZONE,
-    involved TEXT
-)
+) RETURNS SETOF travel_public
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
-        t.id AS travel_id,
+    SELECT
+        t.id,
         t.status,
         t.user_id,
         t.renavam,
         t.departure,
-        o.address_id AS origin_address_id,
-        o.space AS origin_space,
-        a1.address AS origin_address,
-        m.address_id AS middle_address_id,
-        m.space AS middle_space,
-        m.duration AS middle_duration,
-        m.distance AS middle_distance,
-        m.price AS middle_price,
-        a2.address AS middle_address,
-        d.address_id AS destination_address_id,
-        d.duration AS destination_duration,
-        d.distance AS destination_distance,
-        d.price AS destination_price,
-        a3.address AS destination_address,
+        o.space,
+        ao.cep,
+        ao.street,
+        ao.city,
+        ao.state,
+        ao.district,
+        ao.house_number,
+        m.space,
+        m.duration,
+        m.distance,
+        m.price,
+        am.cep, 
+        am.street,
+        am.city,
+        am.state,
+        am.district,
+        am.house_number,
+        d.duration,
+        d.distance,
+        d.price,
+        ad.cep,
+        ad.street,
+        ad.city,
+        ad.state,
+        ad.district,
+        ad.house_number,
         t.arrival,
         t.involved
-    FROM 
-        travels t
+    FROM travels t
     LEFT JOIN origins o ON t.origin_id = o.id
-    LEFT JOIN address a1 ON o.address_id = a1.id
+    LEFT JOIN address ao ON o.address_id = ao.id
     LEFT JOIN middles m ON t.middle_id = m.id
-    LEFT JOIN address a2 ON m.address_id = a2.id
+    LEFT JOIN address am ON m.address_id = am.id
     LEFT JOIN destinations d ON t.destination_id = d.id
-    LEFT JOIN address a3 ON d.address_id = a3.id
+    LEFT JOIN address ad ON d.address_id = ad.id
     WHERE t.user_id = p_user_id;
 END;
 $$;
-
 
 
 -----------------------------------------------------------------

@@ -14,11 +14,12 @@ class Address(BaseModel):
     city: str
     state: str
     house_number: str
-    direction: str
-    user_id: int
+    direction: Optional[str] = Field(default=None)
+    user_id: Optional[int] = Field(default=None)
 
 
 class Travel(BaseModel):
+    id: Optional[int] = Field(default=None)
     user_id: int
     renavam: str
     space: int
@@ -54,26 +55,23 @@ class Travel(BaseModel):
 
 
 class Origin(BaseModel):
-    address: Address
     space: int
+    address: Address
 
 
 class Middle(BaseModel):
-    address: Address
+    space: int
     duration: int
     distance: str
-    space: int
     price: float
-    origin_id: int
+    address: Address
 
 
 class Destination(BaseModel):
-    address: Address
-    arrival: datetime
+    duration: int
     distance: str
     price: float
-    origin_id: Optional[int] = Field(default_factory=None)
-    middle_id: Optional[int] = Field(default_factory=None)
+    address: Address
 
 
 class TravelPublic(BaseModel):
@@ -83,10 +81,11 @@ class TravelPublic(BaseModel):
     renavam: str
     departure: datetime
     origin: Origin
-    middle: Optional[Middle]
+    middle: Optional[Middle] = Field(default=None)
     destination: Destination
     arrival: datetime
+    involved: list[int]
 
 
 class TravelList(BaseModel):
-    pass
+    travels: list[TravelPublic]

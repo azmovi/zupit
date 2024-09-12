@@ -9,7 +9,7 @@ from zupit.database import get_session
 from zupit.schemas.travels import Travel, TravelList
 from zupit.service.travels_crud import (  # get_travel_by_user
     create_travel_db,
-    get_travel_by_user_id,
+    get_travel_by_user,
 )
 
 router = APIRouter(prefix='/travels', tags=['travels'])
@@ -44,6 +44,6 @@ def get_travel(
     session: Session,  # type: ignore
     user_id: int,
 ):
-    if travel_list := get_travel_by_user_id(session, user_id):
+    if travel_list := get_travel_by_user(session, user_id):
         return travel_list
     return None

@@ -1,7 +1,7 @@
 from zupit.schemas.cars import Car
 from zupit.schemas.travels import Address
 from zupit.schemas.users import Public
-from zupit.service.travels_crud import get_travel_by_user_id
+from zupit.service.travels_crud import get_travel_by_user
 
 
 def test_create_travel(
@@ -54,6 +54,5 @@ def test_create_travel(
     assert response.template.name == 'profile/index.html'
 
 
-def test_get_travel_user(session, travel):
-    print(travel)
-    get_travel_by_user_id(session, 1)
+def test_get_travel_user(session, user, travel):
+    print(get_travel_by_user(session, user.id))

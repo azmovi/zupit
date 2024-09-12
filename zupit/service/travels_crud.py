@@ -6,7 +6,14 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Address, Travel, TravelPublic
+from zupit.schemas.travels import (
+    Address,
+    Destination,
+    Middle,
+    Origin,
+    Travel,
+    TravelPublic,
+)
 
 Session = Annotated[Session, Depends(get_session)]
 
@@ -139,15 +146,66 @@ def get_travel_db(
     sql = text('SELECT * FROM get_travel(:id)')
     result = session.execute(sql, {'id': id}).fetchone()
     session.commit()
-    return result
+    return make_travel_public(result)
 
 
-def get_travel_by_user_id(
+def get_travel_by_user(
     session: Session,  # type: ignore
     user_id: int,
 ):
-    sql = text('SELECT * FROM get_travel_by_user_id(:user_id)')
+    sql = text('SELECT * FROM get_travel_by_user(:user_id)')
     travels = session.execute(sql, {'user_id': user_id}).fetchall()
+    list_travel = []
     for travel in travels:
-        print(travel)
-    return 1
+        list_travel.append(make_travel_public(travel))
+    return list_travel
+
+
+def make_travel_public(result) -> TravelPublic:
+    return TravelPublic(
+        id=result[0],
+        status=result[1],
+        user_id=result[2],
+        renavam=result[3],
+        departure=result[4],
+        origin=Origin(
+            space=result[5],
+            address=Address(
+                cep=result[6],
+                street=result[7],
+                city=result[8],
+                state=result[9],
+                district=result[10],
+                house_number=result[11],
+            ),
+        ),
+        middle=Middle(
+            space=result[12],
+            duration=result[13],
+            distance=result[14],
+            price=result[15],
+            address=Address(
+                cep=result[16],
+                street=result[17],
+                city=result[18],
+                state=result[19],
+                district=result[20],
+                house_number=result[21],
+            ),
+        ) if result[12] is not None else None,
+        destination=Destination(
+            duration=result[22],
+            distance=result[23],
+            price=result[24],
+            address=Address(
+                cep=result[25],
+                street=result[26],
+                city=result[27],
+                state=result[28],
+                district=result[29],
+                house_number=result[30],
+            ),
+        ),
+        arrival=result[31],
+        involved=result[32],
+    )
