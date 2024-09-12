@@ -18,29 +18,6 @@ class Address(BaseModel):
     user_id: int
 
 
-class Origin(BaseModel):
-    address: Address
-    space: int
-
-
-class Middle(BaseModel):
-    address: Address
-    duration: int
-    distance: str
-    space: int
-    price: float
-    origin_id: int
-
-
-class Destination(BaseModel):
-    address: Address
-    arrival: datetime
-    distance: str
-    price: float
-    origin_id: Optional[int] = Field(default_factory=None)
-    middle_id: Optional[int] = Field(default_factory=None)
-
-
 class Travel(BaseModel):
     user_id: int
     renavam: str
@@ -76,16 +53,40 @@ class Travel(BaseModel):
         return self
 
 
+class Origin(BaseModel):
+    address: Address
+    space: int
+
+
+class Middle(BaseModel):
+    address: Address
+    duration: int
+    distance: str
+    space: int
+    price: float
+    origin_id: int
+
+
+class Destination(BaseModel):
+    address: Address
+    arrival: datetime
+    distance: str
+    price: float
+    origin_id: Optional[int] = Field(default_factory=None)
+    middle_id: Optional[int] = Field(default_factory=None)
+
+
 class TravelPublic(BaseModel):
     id: int
     status: bool
     user_id: int
     renavam: str
     departure: datetime
-    origin_id: int
-    middle_id: Optional[int]
-    destination_id: int
+    origin: Origin
+    middle: Optional[Middle]
+    destination: Destination
     arrival: datetime
+
 
 class TravelList(BaseModel):
     pass

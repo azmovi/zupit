@@ -7,7 +7,10 @@ from sqlalchemy.orm import Session
 
 from zupit.database import get_session
 from zupit.schemas.travels import Travel, TravelList
-from zupit.service.travels_crud import create_travel_db, get_travel_by_user_id # get_travel_by_user
+from zupit.service.travels_crud import (  # get_travel_by_user
+    create_travel_db,
+    get_travel_by_user_id,
+)
 
 router = APIRouter(prefix='/travels', tags=['travels'])
 
@@ -39,10 +42,8 @@ def crate_travel(
 @router.get('/{user_id}/', response_model=TravelList)
 def get_travel(
     session: Session,  # type: ignore
-    user_id: int
+    user_id: int,
 ):
     if travel_list := get_travel_by_user_id(session, user_id):
         return travel_list
     return None
-
-

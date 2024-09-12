@@ -566,8 +566,8 @@ BEGIN
     v_arrival := p_departure + ((COALESCE(p_middle_duration, 0) + COALESCE(p_destination_duration, 0)) * INTERVAL '1 second');
 
     IF valid_travel(p_user_id, p_departure, v_arrival) THEN
-        INSERT INTO travels(status, user_id, renavam, departure, origin_id, middle_id, destination_id, arrival, )
-        VALUES (TRUE, p_user_id, p_renavam, p_departure, v_origin_id, v_middle_id, v_destination_id, v_arrival)
+        INSERT INTO travels(status, user_id, renavam, departure, origin_id, middle_id, destination_id, arrival, involved)
+        VALUES (TRUE, p_user_id, p_renavam, p_departure, v_origin_id, v_middle_id, v_destination_id, v_arrival, '{}')
         RETURNING id INTO v_id;
         RETURN v_id;
     ELSE
@@ -576,17 +576,92 @@ BEGIN
 END;
 $$;
 
-
 CREATE FUNCTION get_travel(
     p_id INTEGER
-) RETURNS SETOF travels
+) RETURNS TABLE (
+    travel_id INTEGER,
+    status BOOLEAN,
+    user_id INTEGER,
+    renavam VARCHAR(11),
+    departure TIMESTAMP WITH TIME ZONE,
+    origin_space INTEGER,
+    origin_cep VARCHAR(9),
+    origin_street VARCHAR(50),
+    origin_city VARCHAR(50),
+    origin_state VARCHAR(2),
+    origin_district VARCHAR(50),
+    origin_house_number VARCHAR(5),
+    middle_space INTEGER,
+    middle_duration INTEGER,
+    middle_distance VARCHAR(100),
+    middle_price FLOAT,
+    middle_cep VARCHAR(9),
+    middle_street VARCHAR(50),
+    middle_city VARCHAR(50),
+    middle_state VARCHAR(2),
+    middle_district VARCHAR(50),
+    middle_house_number VARCHAR(5),
+    destination_duration INTEGER,
+    destination_distance VARCHAR(100),
+    destination_price FLOAT,
+    destination_cep VARCHAR(9),
+    destination_street VARCHAR(50),
+    destination_city VARCHAR(50),
+    destination_state VARCHAR(2),
+    destination_district VARCHAR(50),
+    destination_house_number VARCHAR(5),
+    arrival TIMESTAMP WITH TIME ZONE,
+    involved INTEGER[]
+)
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT * FROM travels WHERE id = p_id;
+    SELECT
+        t.id AS travel_id,
+        t.status,
+        t.user_id,
+        t.renavam,
+        t.departure,
+        o.space AS origin_space,
+        ao.cep AS origin_cep,
+        ao.street AS origin_street,
+        ao.city AS origin_city,
+        ao.state AS origin_state,
+        ao.district AS origin_district,
+        ao.house_number AS origin_house_number,
+        m.space AS middle_space,
+        m.duration AS middle_duration,
+        m.distance AS middle_distance,
+        m.price AS middle_price,
+        am.cep AS middle_cep,
+        am.street AS middle_street,
+        am.city AS middle_city,
+        am.state AS middle_state,
+        am.district AS middle_district,
+        am.house_number AS middle_house_number,
+        d.duration AS destination_duration,
+        d.distance AS destination_distance,
+        d.price AS destination_price,
+        ad.cep AS destination_cep,
+        ad.street AS destination_street,
+        ad.city AS destination_city,
+        ad.state AS destination_state,
+        ad.district AS destination_district,
+        ad.house_number AS destination_house_number,
+        t.arrival,
+        t.involved
+    FROM travels t
+    LEFT JOIN origins o ON t.origin_id = o.id
+    LEFT JOIN address ao ON o.address_id = ao.id
+    LEFT JOIN middles m ON t.middle_id = m.id
+    LEFT JOIN address am ON m.address_id = am.id
+    LEFT JOIN destinations d ON t.destination_id = d.id
+    LEFT JOIN address ad ON d.address_id = ad.id
+    WHERE t.id = p_id;
 END;
 $$;
+
 
 CREATE FUNCTION get_travel_by_user_id(
     p_user_id INTEGER

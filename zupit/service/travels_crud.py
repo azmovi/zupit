@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Address, Travel, TravelList, TravelPublic
+from zupit.schemas.travels import Address, Travel, TravelPublic
 
 Session = Annotated[Session, Depends(get_session)]
 
@@ -139,23 +139,11 @@ def get_travel_db(
     sql = text('SELECT * FROM get_travel(:id)')
     result = session.execute(sql, {'id': id}).fetchone()
     session.commit()
-    if result:
-        return TravelPublic(
-            id=result[0],
-            status=result[1],
-            user_id=result[2],
-            renavam=result[3],
-            departure=result[4],
-            origin_id=result[5],
-            middle_id=result[6],
-            destination_id=result[7],
-            arrival=result[8],
-        )
-    return None
+    return result
 
 
 def get_travel_by_user_id(
-    session: Session, # type: ignore
+    session: Session,  # type: ignore
     user_id: int,
 ):
     sql = text('SELECT * FROM get_travel_by_user_id(:user_id)')

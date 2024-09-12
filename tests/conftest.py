@@ -184,6 +184,7 @@ def destination(session, user):
     return address_db
 
 
+@pytest.fixture
 def travel(session, user, origin, destination, car1) -> Optional[TravelPublic]:
     travel = Travel(
         user_id=user.id,
@@ -198,6 +199,7 @@ def travel(session, user, origin, destination, car1) -> Optional[TravelPublic]:
     return get_travel_db(session, id)
 
 
+@pytest.fixture
 def full_travel(
     session, user, origin, middle, destination, car1
 ) -> Optional[TravelPublic]:
