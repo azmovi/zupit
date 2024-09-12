@@ -54,16 +54,29 @@ def search_travel(
     )
 
 
-@app.get('/previous-travels', response_class=HTMLResponse)
+@app.get('/profile/my-travels', response_class=HTMLResponse)
 def previous_travels(
     request: Request,
     session: Session,  # type: ignore
 ):
     if user := get_current_user(request, session):
         return templates.TemplateResponse(
-            request=request,
-            name='previous-travels.html',
-            context={'user': user},
+            name='profile/my-travels.html',
+            context={'request': request, 'user': user},
+        )   
+    return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
+
+@app.get('/trip-participants/{travel_id}', response_class=HTMLResponse)
+def trip_participants(
+    request: Request,
+    travel_id: int,  # Captura o travel_id da URL
+    session: Session,  # type: ignore
+):
+    if user := get_current_user(request, session):
+        # Por enquanto, não estamos utilizando o travel_id
+        return templates.TemplateResponse(
+            name='trip-participants.html',
+            context={'request': request, 'user': user, 'travel_id': travel_id},  # Inclui travel_id no contexto
         )
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
