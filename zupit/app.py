@@ -54,14 +54,14 @@ def search_travel(
     )
 
 
-@app.get('/previous-travels', response_class=HTMLResponse)
+@app.get('/profile/my-travels', response_class=HTMLResponse)
 def previous_travels(
     request: Request,
     session: Session,  # type: ignore
 ):
     if user := get_current_user(request, session):
         return templates.TemplateResponse(
-            name='previous-travels.html',
+            name='profile/my-travels.html',
             context={'request': request, 'user': user},
         )   
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)

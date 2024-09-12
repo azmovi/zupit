@@ -82,39 +82,30 @@
 </head>
 <body user_id="{{ user.id }}">
     <section id="historico">
+        <!-- Incluindo a barra de navegação -->
         {% include 'navbar.html' %}
         
         <h1>Histórico de Viagens</h1>
 
-        {% if travels %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Origem</th>
-                        <th>Destino</th>
-                        <th>Data</th>
-                        <th>Hora de Partida</th>
-                        <th>Distância</th>
-                        <th>Duração</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for travel in travels %}
-                        <tr>
-                            <td>{{ travel.origin.street }}, {{ travel.origin.city }}</td>
-                            <td>{{ travel.destination.street }}, {{ travel.destination.city }}</td>
-                            <td>{{ travel.departure_date }}</td>
-                            <td>{{ travel.departure_time.strftime('%H:%M') }}</td>
-                            <td>{{ travel.distance }}</td>
-                            <td>{{ travel.duration }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>Nenhuma viagem encontrada.</p>
-        {% endif %}
-
+        <!-- Exibir a lista de viagens -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Origem</th>
+                    <th>Destino</th>
+                    <th>Data</th>
+                    <th>Horário de Saída</th>
+                    <th>Distância</th>
+                    <th>Duração</th>
+                    <th>Ver Participantes</th> <!-- Coluna para o botão -->
+                </tr>
+            </thead>
+            <tbody id="travel-table-body">
+                <tr>
+                    <td colspan="7">Carregando...</td>  <!-- Alterado para colspan="7" -->
+                </tr>
+            </tbody>
+        </table>
     </section>
 
     <script src="/static/script.js?v=1.0"></script>
