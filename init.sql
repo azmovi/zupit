@@ -713,7 +713,6 @@ BEGIN
     LEFT JOIN destinations d ON t.destination_id = d.id
     LEFT JOIN address ad ON d.address_id = ad.id
     WHERE t.user_id = p_user_id;
->>>>>>> master
 END;
 $$;
 
@@ -840,3 +839,4 @@ JOIN
     users u_autor ON a.id_autor = u_autor.id
 JOIN
     users u_destinatario ON a.id_destinatario = u_destinatario.id;
+
