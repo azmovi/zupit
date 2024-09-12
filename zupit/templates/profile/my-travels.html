@@ -33,6 +33,7 @@
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
+            color: #333; /* Adicionando cor ao texto das células */
         }
 
         table th {
@@ -63,7 +64,7 @@
         }
     </style>
 </head>
-<body>
+<body user_id="{{ user.id }}">
     <section id="historico">
         <!-- Incluindo a barra de navegação -->
         {% include 'navbar.html' %}
@@ -75,7 +76,7 @@
                 <tr>
                     <th>Origem</th>
                     <th>Destino</th>
-                    <th>Data</th>
+                    <th>Data da Viagem</th>
                     <th>Horário de Saída</th>
                     <th>Distância</th>
                     <th>Duração</th>
@@ -89,5 +90,14 @@
             </tbody>
         </table>
     </section>
+    <script src="{{ url_for('static', path='/script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const user_id = document.body.getAttribute('user_id');
+            console.log("user_id:", user_id);
+            get_travels(user_id);
+        });
+
+    </script>
 </body>
 </html>
