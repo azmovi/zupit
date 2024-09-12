@@ -12,6 +12,7 @@ from zupit.schemas.travels import (
     Middle,
     Origin,
     Travel,
+    TravelList,
     TravelPublic,
 )
 
@@ -158,7 +159,7 @@ def get_travel_by_user(
     list_travel = []
     for travel in travels:
         list_travel.append(make_travel_public(travel))
-    return list_travel
+    return TravelList(travels=list_travel)
 
 
 def make_travel_public(result) -> TravelPublic:
