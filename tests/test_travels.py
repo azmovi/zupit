@@ -50,9 +50,7 @@ def test_create_travel(
     }
 
     response = client.post('/travels', json=data)
+    travel = client.get('/travels/{1}')
+    print(travel)
 
     assert response.template.name == 'profile/index.html'
-
-
-def test_get_travel_user(session, user, travel):
-    print(get_travel_by_user(session, user.id))

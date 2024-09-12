@@ -63,8 +63,9 @@ def previous_travels(
         return templates.TemplateResponse(
             name='profile/my-travels.html',
             context={'request': request, 'user': user},
-        )   
+        )
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
+
 
 @app.get('/trip-participants/{travel_id}', response_class=HTMLResponse)
 def trip_participants(
@@ -76,7 +77,7 @@ def trip_participants(
         # Por enquanto, não estamos utilizando o travel_id
         return templates.TemplateResponse(
             name='trip-participants.html',
-            context={'request': request, 'user': user, 'travel_id': travel_id},  # Inclui travel_id no contexto
+            context={'request': request, 'user': user, 'travel_id': travel_id},
         )
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
