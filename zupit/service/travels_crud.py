@@ -1,65 +1,21 @@
 from http import HTTPStatus
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Address, Travel
+from zupit.schemas.travels import (
+    Address,
+    Destination,
+    Middle,
+    Origin,
+    Travel,
+    TravelPublic,
+)
 
 Session = Annotated[Session, Depends(get_session)]
-
-
-def valid_travel(
-    session: Session,  # type: ignore
-    travel: Travel,
-) -> bool:
-    return True
-
-
-def create_travel_db(
-    session: Session,  # type: ignore
-    travel: Travel,
-) -> bool:
-    origin_id = create_address_db(session, travel.pick_up)
-    destination_id = create_address_db(session, travel.pick_off)
-
-    sql = text("""
-    SELECT * FROM create_travel(
-        :user_id,
-        :renavam,
-        :space,
-        :departure_date,
-        :departure_time,
-        :origin_id,
-        :destination_id,
-        :distance,
-        :duration
-    )
-   """)
-    try:
-        result = session.execute(
-            sql,
-            {
-                'user_id': travel.user_id,
-                'renavam': travel.renavam,
-                'space': travel.space,
-                'departure_date': travel.departure_date,
-                'departure_time': travel.departure_time,
-                'origin_id': origin_id,
-                'destination_id': destination_id,
-                'distance': travel.distance,
-                'duration': travel.duration,
-            },
-        )
-        session.commit()
-        return result
-    except Exception:
-        session.rollback()
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
-        )
 
 
 def create_address_db(
@@ -86,6 +42,7 @@ def create_address_db(
         if address_id:
             return address_id
         else:
+            session.rollback()
             raise HTTPException(
                 status_code=HTTPStatus.NOT_ACCEPTABLE,
                 detail='Address not create',
@@ -128,3 +85,127 @@ def get_address_db(
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
         )
+
+
+def create_travel_db(
+    session: Session,  # type: ignore
+    travel: Travel,
+) -> int:
+    middle_address_id = None
+    origin_address_id = create_address_db(session, travel.origin)
+    if travel.middle:
+        middle_address_id = create_address_db(session, travel.middle)
+    destination_address_id = create_address_db(session, travel.destination)
+
+    sql = text(
+        """
+        SELECT * FROM create_travel(
+            :user_id,
+            :renavam,
+            :space,
+            :departure,
+            :origin_address_id,
+            :middle_address_id,
+            :middle_duration,
+            :middle_distance,
+            :destination_address_id,
+            :destination_duration,
+            :destination_distance
+        )
+        """
+    )
+    try:
+        result = session.execute(
+            sql,
+            {
+                'user_id': travel.user_id,
+                'renavam': travel.renavam,
+                'space': travel.space,
+                'departure': travel.departure,
+                'origin_address_id': origin_address_id,
+                'middle_address_id': middle_address_id,
+                'middle_duration': travel.middle_duration,
+                'middle_distance': travel.middle_distance,
+                'destination_address_id': destination_address_id,
+                'destination_duration': travel.destination_duration,
+                'destination_distance': travel.destination_distance,
+            },
+        )
+        id = result.fetchone()[0]
+        session.commit()
+        return id
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=f'{e}')
+
+
+def get_travel_db(
+    session: Session,  # type: ignore
+    id: int,
+) -> Optional[TravelPublic]:
+    sql = text('SELECT * FROM get_travel(:id)')
+    result = session.execute(sql, {'id': id}).fetchone()
+    session.commit()
+    return make_travel_public(result)
+
+
+def get_travel_by_user(
+    session: Session,  # type: ignore
+    user_id: int,
+):
+    sql = text('SELECT * FROM get_travel_by_user(:user_id)')
+    travels = session.execute(sql, {'user_id': user_id}).fetchall()
+    list_travel = []
+    for travel in travels:
+        list_travel.append(make_travel_public(travel))
+    return list_travel
+
+
+def make_travel_public(result) -> TravelPublic:
+    return TravelPublic(
+        id=result[0],
+        status=result[1],
+        user_id=result[2],
+        renavam=result[3],
+        departure=result[4],
+        origin=Origin(
+            space=result[5],
+            address=Address(
+                cep=result[6],
+                street=result[7],
+                city=result[8],
+                state=result[9],
+                district=result[10],
+                house_number=result[11],
+            ),
+        ),
+        middle=Middle(
+            space=result[12],
+            duration=result[13],
+            distance=result[14],
+            price=result[15],
+            address=Address(
+                cep=result[16],
+                street=result[17],
+                city=result[18],
+                state=result[19],
+                district=result[20],
+                house_number=result[21],
+            ),
+        ) if result[12] is not None else None,
+        destination=Destination(
+            duration=result[22],
+            distance=result[23],
+            price=result[24],
+            address=Address(
+                cep=result[25],
+                street=result[26],
+                city=result[27],
+                state=result[28],
+                district=result[29],
+                house_number=result[30],
+            ),
+        ),
+        arrival=result[31],
+        involved=result[32],
+    )

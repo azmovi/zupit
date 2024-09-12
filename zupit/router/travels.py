@@ -1,23 +1,49 @@
+from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.travels import Travel
-from zupit.service.travels_crud import create_travel_db, valid_travel
+from zupit.schemas.travels import Travel, TravelList
+from zupit.service.travels_crud import (  # get_travel_by_user
+    create_travel_db,
+    get_travel_by_user,
+)
 
 router = APIRouter(prefix='/travels', tags=['travels'])
 
 Session = Annotated[Session, Depends(get_session)]
 
 
-@router.post('/', response_model=bool)
+@router.post(
+    '/',
+    response_class=HTMLResponse,
+    status_code=HTTPStatus.CREATED,
+)
 def crate_travel(
     request: Request,
     session: Session,  # type: ignore
     travel: Travel,
 ):
-    if valid_travel(session, session):
+    try:
         create_travel_db(session, travel)
-    return True
+        return RedirectResponse(
+            url='/profile', status_code=HTTPStatus.SEE_OTHER
+        )
+    except HTTPException as exc:
+        request.session['error'] = exc.detail
+        return RedirectResponse(
+            url='/offer/fifth', status_code=HTTPStatus.SEE_OTHER
+        )
+
+
+@router.get('/{user_id}/', response_model=TravelList)
+def get_travel(
+    session: Session,  # type: ignore
+    user_id: int,
+):
+    if travel_list := get_travel_by_user(session, user_id):
+        return travel_list
+    return None
