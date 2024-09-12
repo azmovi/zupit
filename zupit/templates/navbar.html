@@ -13,10 +13,10 @@
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
-            position: fixed; /* Mantém a navbar sempre visível */
+            position: fixed; /* Fixa a navbar no topo */
             top: 0;
             width: 100%;
-            z-index: 9999; /* Garante que a navbar esteja acima de outros elementos */
+            z-index: 1000;
         }
 
         .navbar-logo{
@@ -27,7 +27,7 @@
         }
 
         .navbar-logo img {
-            padding: 5px 15px;
+            padding: 5px 15px ;
             display: inline-block;
         }
 
@@ -40,8 +40,8 @@
 
         .navbar-links li {
             display: inline;
-            position: relative; /* Para garantir que o dropdown seja posicionado corretamente */
         }
+
 
         .navbar-links .user {
             color: #37479e;
@@ -50,8 +50,8 @@
             padding: 9px 20px;
             display: inline-block;
             transition: background-color 0.5s ease;
-            cursor: pointer;
         }
+
 
         .navbar-links a {
             color: #324cda;
@@ -67,58 +67,26 @@
             background-color: #1900f7;
             color: #FFFFFF;
         }
-
-        .dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            z-index: 99999; /* Maior que o z-index da navbar */
+        .navbar-links .user:hover {
+            background-color: #ffffff;
         }
 
-        .dropdown a {
-            color: #37479e;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown a:hover {
-            background-color: #ddd;
-        }
-
-        /* Mostra o dropdown ao passar o mouse */
-        .navbar-links li:hover .dropdown {
-            display: block;
-        }
-
-        .navbar-dropdown {
-            position: absolute;
-            top: 100%; /* Para aparecer logo abaixo do ícone */
-            right: 0;
-            background-color: white;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 1000; /* Ajuste o valor para garantir que se sobreponha */
-            display: none; /* Inicia oculto */
-        }
-
-        .navbar-links:hover .navbar-dropdown {
-            display: block; /* Mostra o dropdown ao passar o mouse */
+        .content {
+            padding: 60px 20px; /* Adiciona um espaçamento para que o conteúdo não fique atrás da navbar */
+            margin-top: 50px; /* Compensa a altura da navbar */
         }
 
         /* ICON */
+
         .icon {
             width: 24px;
             height: 24px;
-            color: #0063d4;
+            color: #0063d4; /* Cor do ícone */
         }
 
         .icon-tabler {
             stroke-width: 2;
-            stroke: currentColor;
+            stroke: currentColor; /* Usará a cor definida na propriedade CSS 'color' */
         }
 
         /* Responsividade */
@@ -146,19 +114,13 @@
                 <li><a href="/profile/my-travels">Minhas Viagens</a></li>
                 <li><a href="/offer">Oferecer Carona</a></li>
                 <li>
-                    <a class="user">
+                    <a class="user" href="/profile">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                             <circle cx="12" cy="7" r="4" />
                             <path d="M5 21a7 7 0 0 1 14 0" />
                         </svg>
                     </a>
-                    <!-- Dropdown Menu -->
-                    <div class="dropdown">
-                        <a href="/profile">Perfil</a>
-                        <a href="/settings">Configurações</a>
-                        <a href="/logout">Sair</a>
-                    </div>
                 </li>
             </ul>
         </nav>

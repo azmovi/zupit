@@ -78,9 +78,7 @@ def trip_participants(
             name='trip-participants.html',
             context={'request': request, 'user': user, 'travel_id': travel_id},  # Inclui travel_id no contexto
         )
-    
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
-
 
 
 @app.get('/sign-up', response_class=HTMLResponse)
