@@ -14,6 +14,7 @@ from zupit.schemas.travels import (
     Travel,
     TravelList,
     TravelPublic,
+    TravelList,
 )
 
 Session = Annotated[Session, Depends(get_session)]
@@ -160,7 +161,6 @@ def get_travel_by_user(
     for travel in travels:
         list_travel.append(make_travel_public(travel))
     return TravelList(travels=list_travel)
-
 
 def make_travel_public(result) -> TravelPublic:
     return TravelPublic(
