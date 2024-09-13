@@ -1,7 +1,8 @@
+from http import HTTPStatus
+
 from zupit.schemas.cars import Car
-from zupit.schemas.travels import Address
+from zupit.schemas.travels import Address, TravelPublic
 from zupit.schemas.users import Public
-from zupit.service.travels_crud import get_travel_by_user
 
 
 def test_create_travel(
@@ -50,7 +51,15 @@ def test_create_travel(
     }
 
     response = client.post('/travels', json=data)
-    travel = client.get('/travels/{1}')
-    print(travel)
 
     assert response.template.name == 'profile/index.html'
+    assert response.status_code == HTTPStatus.OK
+
+
+def test_get_travels_from_user(client, full_travel):
+    response = client.get('/travels/1')
+    travels = [TravelPublic.model_validate(full_travel).model_dump()]
+    travels[0]['arrival'] = '2225-02-02T09:38:50Z'
+    travels[0]['departure'] = '2225-02-02T05:02:00Z'
+
+    assert response.json() ==  {'travels': travels}

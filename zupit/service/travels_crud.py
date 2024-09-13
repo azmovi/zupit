@@ -12,6 +12,7 @@ from zupit.schemas.travels import (
     Middle,
     Origin,
     Travel,
+    TravelList,
     TravelPublic,
     TravelList,
 )
