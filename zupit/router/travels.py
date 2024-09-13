@@ -30,10 +30,11 @@ def crate_travel(
     try:
         create_travel_db(session, travel)
         return RedirectResponse(
-            url='/profile', status_code=HTTPStatus.SEE_OTHER
+            url='/profile/', status_code=HTTPStatus.SEE_OTHER
         )
     except HTTPException as exc:
         request.session['error'] = exc.detail
+        print(request.session)
         return RedirectResponse(
             url='/offer/fifth', status_code=HTTPStatus.SEE_OTHER
         )

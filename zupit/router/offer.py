@@ -22,11 +22,12 @@ def first(
 ):
     user = get_current_user(request, session)
     driver = get_current_driver(request, session)
+    error = request.session.get('error', None)
     if user and driver:
         return templates.TemplateResponse(
             request=request,
             name='offer/first.html',
-            context={'user': user, 'driver': driver},
+            context={'user': user, 'driver': driver, 'error': error},
         )
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER
@@ -41,11 +42,12 @@ def step(
 ):
     user = get_current_user(request, session)
     driver = get_current_driver(request, session)
+    error = request.session.get('error', None)
     if user and driver:
         return templates.TemplateResponse(
             request=request,
             name=f'offer/{step}.html',
-            context={'user': user, 'driver': driver},
+            context={'user': user, 'driver': driver, 'error': error},
         )
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER

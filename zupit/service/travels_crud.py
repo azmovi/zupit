@@ -14,7 +14,6 @@ from zupit.schemas.travels import (
     Travel,
     TravelList,
     TravelPublic,
-    TravelList,
 )
 
 Session = Annotated[Session, Depends(get_session)]
@@ -136,9 +135,12 @@ def create_travel_db(
         id = result.fetchone()[0]
         session.commit()
         return id
-    except Exception as e:
+    except Exception:
         session.rollback()
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=f'{e}')
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Travel creation Invalid',
+        )
 
 
 def get_travel_db(
@@ -161,6 +163,7 @@ def get_travel_by_user(
     for travel in travels:
         list_travel.append(make_travel_public(travel))
     return TravelList(travels=list_travel)
+
 
 def make_travel_public(result) -> TravelPublic:
     return TravelPublic(
