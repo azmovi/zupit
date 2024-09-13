@@ -56,12 +56,6 @@ function get_travels(user_id) {
         .then(data => {
             console.log('Dados recebidos:', data);  // Verifique se os dados estão corretos no console
             const tableBody = document.getElementById('travel-table-body');
-            
-            if (!tableBody) {
-                console.error('Elemento com id "travel-table-body" não encontrado.');
-                return;
-            }
-
             tableBody.innerHTML = ''; // Limpar a tabela antes de popular
 
             if (data && data.travels && data.travels.length > 0) {
@@ -75,8 +69,6 @@ function get_travels(user_id) {
 
                     // Extrair data e hora de arrival
                     const arrival = new Date(travel.arrival);
-                    const arrivalDate = arrival.toLocaleDateString();  // Ex: "05/09/2024"
-                    const arrivalTime = arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });  // Ex: "17:00"
 
                     // Calcular a duração da viagem
                     const durationMs = arrival.getTime() - departure.getTime();  // Diferença em milissegundos
@@ -112,7 +104,95 @@ function get_travels(user_id) {
         .catch(error => console.error('Erro ao carregar viagens:', error));
 }
 
+function get_driver_info(travel_id) {
+    // Faz a requisição para obter os detalhes da viagem
+    fetch(`/travels/search/${travel_id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar detalhes da viagem');
+            }
+            return response.json();  // Converte a resposta para JSON
+        })
+        .then(data => {
+            if (data && typeof data.user_id !== 'undefined') {
+                const user_id = data.user_id;  // Extrai o user_id
+                const renavam = data.renavam;  // Extrai o renavam
+                // Faz uma nova requisição para buscar os detalhes do usuário
+                return fetch(`/users/${user_id}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erro ao buscar detalhes do usuário');
+                        }
+                        return response.json();  // Converte a resposta para JSON
+                    })
+                    .then(userData => {
+                        if (userData && userData.name) {
+                            const userName = userData.name;  // Extrai o nome do usuário
+                            return { userName, user_id, renavam }; // Retorna um objeto com userName e renavam
+                        } else {
+                            throw new Error('Nome do usuário não encontrado.');
+                        }
+                    });
+            } else {
+                throw new Error('Nenhum user_id encontrado para essa viagem.');
+            }
+        })
+        .then(({ userName, user_id, renavam }) => {
+            // Faz a requisição para buscar os detalhes do motorista
+            return fetch(`/drivers/${user_id}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar detalhes do motorista');
+                    }
+                    return response.json();  // Converte a resposta para JSON
+                })
+                .then(driverData => {
+                    if (driverData && typeof driverData.rating !== 'undefined') {
+                        // Usa toFixed(1) para exibir o rating com uma casa decimal
+                        const driverRating = driverData.rating.toFixed(1);  
+                        console.log('rating motorista:', driverRating);
+                        
+                        // Agora faz a requisição para buscar os detalhes do carro usando o renavam
+                        return fetch(`/cars/search/${renavam}/`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Erro ao buscar detalhes do carro');
+                                }
+                                return response.json();  // Converte a resposta para JSON
+                            })
+                            .then(carData => {
+                                if (carData && carData.brand && carData.model && carData.plate && carData.color) {
+                                    // Monta a linha da tabela com todas as informações
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td>${userName}</td>
+                                        <td>${carData.brand} ${carData.model} (${carData.color})</td>
+                                        <td>${carData.plate}</td>
+                                        <td>${driverRating}</td>
+                                        <td><a href="/giveRating/${user_id}" class="button-details">Avaliar</a></td>
+                                    `;
 
+                                    // Adiciona a linha na tabela
+                                    const tableBody = document.getElementById('travel-table-body');
+                                    tableBody.innerHTML = ''; // Limpar a tabela antes de popular
+                                    if (tableBody) {
+                                        tableBody.appendChild(row);  // Adiciona a linha à tabela
+                                    } else {
+                                        console.error('Elemento com id "travel-table-body" não encontrado.');
+                                    }
+                                } else {
+                                    throw new Error('Detalhes do carro não encontrados.');
+                                }
+                            });
+                    } else {
+                        throw new Error('Avaliação do motorista não encontrada.');
+                    }
+                });
+        })
+        .catch(error => {
+            console.error('Erro ao buscar informações:', error);
+        });
+}
 
 function save_form(step) {
     const form = document.querySelector('form');

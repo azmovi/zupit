@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.cars import Car, CarList
+from zupit.schemas.cars import Car, CarList, CarPublic
 from zupit.service.cars_crud import create_car_db, get_car_db, get_cars_db
 
 router = APIRouter(prefix='/cars', tags=['cars'])
@@ -44,3 +44,16 @@ def get_cars(
     if car_list := get_cars_db(user_id, session):
         return car_list
     return None
+
+@router.get('/search/{renavam}/', response_model=CarPublic)
+def get_car(
+    renavam: str,
+    session: Session = Depends(get_session),  # Depende da sessão do SQLAlchemy
+):
+    specific_car = get_car_db(renavam, session)
+    
+    if specific_car:
+        return specific_car
+
+    # Retorne uma exceção HTTP 404 se o carro não for encontrado
+    raise HTTPException(status_code=404, detail="Car not found")

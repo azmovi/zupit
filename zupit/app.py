@@ -120,3 +120,5 @@ def car(
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER
     )
+
+
