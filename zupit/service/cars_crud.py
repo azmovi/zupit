@@ -39,7 +39,7 @@ def create_car_db(car: Car, session: Session = Depends(get_session)) -> bool:
 
 
 def get_car_db(
-    renavam: str, session: Session = Depends(get_session)
+    renavam: str, session: Session
 ) -> Optional[Car]:
     sql = text('SELECT * FROM get_car_by_renavam(:renavam);')
 

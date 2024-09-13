@@ -29,6 +29,13 @@ class Car(BaseModel):
             color=color,
         )
 
+class CarPublic(BaseModel):
+    renavam: str
+    user_id: int
+    brand: str
+    model: str
+    plate: str
+    color: str
 
 class CarList(BaseModel):
     cars: list[Car]
