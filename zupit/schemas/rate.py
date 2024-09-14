@@ -49,3 +49,6 @@ class RatePublic(BaseModel):
     rate_type: rating_type
     grade: rating_grade
     content: Optional[str] = None
+
+class RateList(BaseModel):
+    rates: list[RatePublic]
