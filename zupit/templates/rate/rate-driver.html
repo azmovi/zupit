@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação Motorista</title>
+    <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        #content {
+            width: 100%;  /* Aumenta a largura para ocupar todo o espaço */
+            height: 150px;  /* Aumenta a altura do campo de texto */
+            padding: 10px;  /* Adiciona espaço interno ao redor do texto */
+            font-size: 16px;  /* Ajusta o tamanho da fonte para melhor legibilidade */
+            border: 1px solid #ccc;  /* Define uma borda ao redor */
+            border-radius: 4px;  /* Adiciona bordas arredondadas */
+            box-sizing: border-box;  /* Garante que o padding não afete a largura total */
+            text-align: left;  /* Alinha o texto à esquerda */
+            vertical-align: top;  /* Alinha o texto ao topo */
+            resize: none;  /* Impede o redimensionamento do campo de texto */
+        }
+
+        ::placeholder {
+            text-align: left;  /* Alinha o placeholder à esquerda */
+        }
+    </style>
+</head>
+<body>
+    <section class="">
+        {% include 'navbar.html' %}
+        <h1>Avalie o Motorista</h1>
+        <form method="POST" action="/users">
+            <div class="justify-start">
+                <label>Nota:</label><br>
+                <input type="radio" id="otimo" name="grade" value="OTIMO" checked>
+                <label for="otimo">Ótimo</label><br>  
+
+                <input type="radio" id="bom" name="grade" value="BOM">
+                <label for="bom">Bom</label><br>
+                
+                <input type="radio" id="mediano" name="grade" value="MEDIANO">
+                <label for="mediano">Mediano</label><br>
+                
+                <input type="radio" id="ruim" name="grade" value="RUIM">
+                <label for="ruim">Ruim</label><br>
+                
+                <input type="radio" id="pessimo" name="grade" value="PESSIMO">
+                <label for="pessimo">Péssimo</label><br><br>
+            </div>
+    
+            <div id="rating_content">
+                <textarea id="content" name="content" placeholder="Explique sua nota aqui"></textarea><br><br>
+            </div>
+    
+            <button class="button3" type="submit">Enviar Avaliação</button>
+        </form>
+    </section>
+</body>
+</html>
