@@ -169,7 +169,7 @@ function get_driver_info(travel_id) {
                                         <td>${carData.brand} ${carData.model} (${carData.color})</td>
                                         <td>${carData.plate}</td>
                                         <td>${driverRating}</td>
-                                        <td><a href="/giveRating/${user_id}" class="button-details">Avaliar</a></td>
+                                        <td><a href="/rate/rate-driver/${user_id}" class="button-details">Avaliar</a></td>
                                     `;
 
                                     // Adiciona a linha na tabela

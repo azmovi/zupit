@@ -716,136 +716,72 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION get_travels_by_user_id(p_user_id INTEGER)
-RETURNS SETOF travels
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT *
-    FROM travels
-    WHERE user_id = p_user_id;
-END;
-$$;
+
 -----------------------------------------------------------------
 ---------------------------AVALIACAO-------------------------------
 -----------------------------------------------------------------
 
 --criacao da tabela de avaliacao
-CREATE TYPE tipo_avaliacao AS ENUM ('CARONISTA', 'CARONEIRO');
-CREATE TYPE nota_avaliacao AS ENUM ('PESSIMO', 'RUIM', 'MEDIANO', 'BOM', 'OTIMO');
-CREATE TABLE Avalia (
+CREATE TYPE rating_type AS ENUM ('CARONISTA', 'CARONEIRO');
+CREATE TYPE rating_grade AS ENUM ('PESSIMO', 'RUIM', 'MEDIANO', 'BOM', 'OTIMO');
+CREATE TABLE Rate (
     id SERIAL PRIMARY KEY,
-    id_autor INTEGER NOT NULL,
-    id_destinatario INTEGER NOT NULL,
-    criacao TIMESTAMP NOT NULL,
-    tipo_de_avaliado tipo_avaliacao NOT NULL,
-    nota nota_avaliacao NOT NULL,
-    conteudo VARCHAR(255),
-    FOREIGN KEY (id_autor) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (id_destinatario) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+    author_id INTEGER NOT NULL,
+    recipient_id INTEGER NOT NULL,
+    creation TIMESTAMP NOT NULL,
+    rate_type rating_type NOT NULL,
+    grade rating_grade NOT NULL,
+    content VARCHAR(255),
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 --função para criar uma avaliacao nova
-CREATE FUNCTION create_avaliacao(
-    p_id_autor INTEGER,
-    p_id_destinatario INTEGER,
-    p_tipo_de_avaliado tipo_avaliacao,
-    p_nota nota_avaliacao,
-    p_conteudo VARCHAR(255)
+CREATE FUNCTION create_rating(
+    p_author_id INTEGER,
+    p_recipient_id INTEGER,
+    p_rate_type rating_type,
+    p_grade rating_grade,
+    p_content VARCHAR(255)
 ) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_id_avaliacao INTEGER;
+    v_rating_id INTEGER;
 BEGIN
     -- Insere a nova avaliação na tabela Avalia
-    INSERT INTO Avalia (id_autor, id_destinatario, criacao, tipo_de_avaliado, nota, conteudo)
-    VALUES (p_id_autor, p_id_destinatario, NOW(), p_tipo_de_avaliado, p_nota, p_conteudo)
-    RETURNING id INTO v_id_avaliacao;
+    INSERT INTO Rate (author_id, recipient_id, creation, rate_type, grade, content)
+    VALUES (p_author_id, p_recipient_id, NOW(), p_rate_type, p_grade, p_content)
+    RETURNING id INTO v_rating_id;
 
     -- Retorna o ID da avaliação recém-criada
-    RETURN v_id_avaliacao;
+    RETURN v_rating_id;
 END;
 $$;
 
---procedimento que mostra os detalhes dos usuarios que estavam em uma carona
-CREATE OR REPLACE FUNCTION get_trip_participants(
-    p_user_id INTEGER,  -- ID do usuário que está fazendo a consulta
-    p_travel_id INTEGER -- ID da viagem que se deseja consultar
+CREATE OR REPLACE FUNCTION get_rating_by_recipient_id(
+    p_recipient_id INTEGER
 )
 RETURNS TABLE (
-    participant_id INTEGER,
-    name VARCHAR,
-    email VARCHAR,
-    gender gender,
-    birthday DATE
-)
-LANGUAGE plpgsql
-AS $$
+    id INTEGER,
+    author_id INTEGER,
+    recipient_id INTEGER,
+    rate_type rating_type,
+    grade rating_grade,
+    content VARCHAR,
+    creation TIMESTAMP
+) AS $$
 BEGIN
-    -- Retornar detalhes de todos os participantes da viagem especificada
     RETURN QUERY
-    SELECT u.id AS participant_id,
-           u.name,
-           u.email,
-           u.sex AS gender,
-           u.birthday
-    FROM users u
-    INNER JOIN travels t ON u.id = t.user_id
-    WHERE t.id = p_travel_id
-      AND u.id != p_user_id;
-END;
-$$;
-
---funcao que atualiza as avaliacoes medias de um usuario
-CREATE OR REPLACE FUNCTION atualizar_avaliacao_media()
-RETURNS TRIGGER AS $$
-DECLARE
-    nova_media FLOAT;
-BEGIN
-    -- Calcular a nova média das avaliações para o usuário avaliado
-    SELECT AVG(CASE
-                 WHEN nota = 'PESSIMO' THEN 1
-                 WHEN nota = 'RUIM' THEN 2
-                 WHEN nota = 'MEDIANO' THEN 3
-                 WHEN nota = 'BOM' THEN 4
-                 WHEN nota = 'OTIMO' THEN 5
-               END) INTO nova_media
-    FROM Avalia
-    WHERE id_destinatario = NEW.id_destinatario;
-
-    -- Atualizar a coluna de avaliação média do usuário
-    UPDATE users
-    SET avaliacao_media = nova_media
-    WHERE id = NEW.id_destinatario;
-
-    RETURN NEW;
+    SELECT 
+        r.id, 
+        r.author_id, 
+        r.recipient_id, 
+        r.rate_type, 
+        r.grade, 
+        r.content, 
+        r.creation
+    FROM Rate r
+    WHERE r.recipient_id = p_recipient_id;
 END;
 $$ LANGUAGE plpgsql;
-
-
---trigger ativado apos uma avaliacao ser feita para atualizar a avaliacao media de um usuario
-CREATE TRIGGER trigger_atualizar_avaliacao_media
-AFTER INSERT ON Avalia
-FOR EACH ROW
-EXECUTE FUNCTION atualizar_avaliacao_media();
-
---view dos detalhes de uma avaliacao feita
-CREATE VIEW view_detalhes_avaliacoes AS
-SELECT
-    a.id AS avaliacao_id,
-    a.criacao AS data_avaliacao,
-    u_autor.name AS nome_autor,
-    u_autor.email AS email_autor,
-    u_destinatario.name AS nome_destinatario,
-    u_destinatario.email AS email_destinatario,
-    a.tipo_de_avaliado AS tipo_avaliacao,
-    a.nota AS nota_avaliacao,
-    a.conteudo AS conteudo_avaliacao
-FROM
-    Avalia a
-JOIN
-    users u_autor ON a.id_autor = u_autor.id
-JOIN
-    users u_destinatario ON a.id_destinatario = u_destinatario.id;

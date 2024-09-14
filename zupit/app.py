@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import get_session
-from .router import avalia, cars, drivers, offer, profile, travels, users
+from .router import rate, cars, drivers, offer, profile, travels, users
 from .utils import get_current_driver, get_current_user
 
 app = FastAPI()
@@ -23,9 +23,8 @@ app.include_router(drivers.router)
 app.include_router(cars.router)
 app.include_router(offer.router)
 app.include_router(travels.router)
-app.include_router(avalia.router)
+app.include_router(rate.router)
 app.include_router(profile.router)
-
 
 Session = Annotated[Session, Depends(get_session)]
 
