@@ -824,8 +824,8 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION get_rating_by_recipient_id(
-    p_recipient_id INTEGER
+CREATE OR REPLACE FUNCTION get_rating_by_id(
+    p_id INTEGER
 )
 RETURNS TABLE (
     id INTEGER,
@@ -847,6 +847,66 @@ BEGIN
         r.content, 
         r.creation
     FROM Rate r
-    WHERE r.recipient_id = p_recipient_id;
+    WHERE r.id = p_id;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION get_rates_by_user(p_user_id INTEGER)
+RETURNS TABLE (
+    id INTEGER,
+    author_id INTEGER,
+    recipient_id INTEGER,
+    rate_type rating_type,
+    grade rating_grade,
+    content VARCHAR,
+    creation TIMESTAMP
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        r.id, 
+        r.author_id, 
+        r.recipient_id, 
+        r.rate_type, 
+        r.grade, 
+        r.content, 
+        r.creation
+    FROM Rate r
+    WHERE r.recipient_id = p_user_id;
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION update_driver_rating()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Atualiza a nota média do motorista (recipient_id)
+    UPDATE drivers
+    SET rating = (
+        SELECT AVG(
+            CASE 
+                WHEN grade = 'OTIMO' THEN 5
+                WHEN grade = 'BOM' THEN 4
+                WHEN grade = 'MEDIANO' THEN 3
+                WHEN grade = 'RUIM' THEN 2
+                WHEN grade = 'PESSIMO' THEN 1
+            END
+        )
+        FROM Rate
+        WHERE recipient_id = NEW.recipient_id
+    )
+    WHERE user_id = NEW.recipient_id;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trigger_update_driver_rating
+AFTER INSERT ON Rate
+FOR EACH ROW
+EXECUTE FUNCTION update_driver_rating();

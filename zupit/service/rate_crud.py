@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from zupit.schemas.rate import Rate
+from zupit.schemas.rate import Rate, RateList, RatePublic
 
 
 def create_rating_db(rating: Rate, session: Session):
@@ -36,14 +36,14 @@ def create_rating_db(rating: Rate, session: Session):
         )
 
 
-def get_rating_db(recipient_id: int, session: Session) -> Optional[Rate]:
+def get_rating_db(id: int, session: Session) -> Optional[Rate]:
     sql = text(
         """
-        SELECT id, author_id, recipient_id, rate_type, grade, content, creation
-        FROM get_rating_by_recipient_id(:recipient_id);
+        SELECT id, author_id, id, rate_type, grade, content, creation
+        FROM get_rating_by_id(:id);
         """
     )
-    rate_db = session.execute(sql, {'recipient_id': recipient_id}).fetchone()
+    rate_db = session.execute(sql, {'id': id}).fetchone()
     session.commit()
 
     if rate_db:
@@ -57,3 +57,25 @@ def get_rating_db(recipient_id: int, session: Session) -> Optional[Rate]:
             creation=rate_db[6],
         )
     return None
+
+def get_rates_by_user(
+    session: Session,  # type: ignore
+    recipient_id: int,
+):
+    sql = text('SELECT * FROM get_rates_by_user(:recipient_id)')
+    list_rate = []
+    rates = session.execute(sql, {'recipient_id': recipient_id}).fetchall()
+    
+    for rate in rates:
+        rate_instance = RatePublic(
+            id=rate[0],
+            author_id=rate[1],
+            recipient_id=rate[2],
+            rate_type=rate[3],
+            grade=rate[4],
+            content=rate[5],
+            creation=rate[6],
+        )
+        list_rate.append(rate_instance)
+    
+    return RateList(rates=list_rate)
