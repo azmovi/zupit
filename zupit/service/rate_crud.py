@@ -58,6 +58,30 @@ def get_rating_db(id: int, session: Session) -> Optional[Rate]:
         )
     return None
 
+def check_rating_db(recipient_id: int, author_id: int, session: Session) -> Optional[Rate]:
+    sql = text(
+        """
+        SELECT id, author_id, recipient_id, rate_type, grade, content, creation
+        FROM check_rating_exists(:author_id, :recipient_id);
+        """
+    )
+    
+    rate_db = session.execute(sql, {'author_id': author_id, 'recipient_id': recipient_id}).fetchone()
+    session.commit()
+
+    if rate_db:
+        return Rate(
+            id=rate_db[0],
+            author_id=rate_db[1],
+            recipient_id=rate_db[2],
+            rate_type=rate_db[3],
+            grade=rate_db[4],
+            content=rate_db[5],
+            creation=rate_db[6],
+        )
+    return None
+
+
 def get_rates_by_user(
     session: Session,  # type: ignore
     recipient_id: int,

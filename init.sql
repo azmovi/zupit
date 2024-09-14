@@ -851,6 +851,36 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION check_rating_exists(
+    p_author_id INTEGER,
+    p_recipient_id INTEGER
+)
+RETURNS TABLE (
+    id INTEGER,
+    author_id INTEGER,
+    recipient_id INTEGER,
+    rate_type rating_type,
+    grade rating_grade,
+    content VARCHAR,
+    creation TIMESTAMP
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        r.id, 
+        r.author_id, 
+        r.recipient_id, 
+        r.rate_type, 
+        r.grade, 
+        r.content, 
+        r.creation
+    FROM Rate r
+    WHERE r.author_id = p_author_id
+    AND r.recipient_id = p_recipient_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
 
 CREATE OR REPLACE FUNCTION get_rates_by_user(p_user_id INTEGER)
 RETURNS TABLE (
