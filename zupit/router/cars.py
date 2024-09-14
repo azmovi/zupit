@@ -45,15 +45,16 @@ def get_cars(
         return car_list
     return None
 
+
 @router.get('/search/{renavam}/', response_model=CarPublic)
 def get_car(
     renavam: str,
     session: Session = Depends(get_session),  # Depende da sessão do SQLAlchemy
 ):
     specific_car = get_car_db(renavam, session)
-    
+
     if specific_car:
         return specific_car
 
     # Retorne uma exceção HTTP 404 se o carro não for encontrado
-    raise HTTPException(status_code=404, detail="Car not found")
+    raise HTTPException(status_code=404, detail='Car not found')

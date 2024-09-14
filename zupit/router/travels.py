@@ -40,6 +40,7 @@ def crate_travel(
             url='/offer/fifth', status_code=HTTPStatus.SEE_OTHER
         )
 
+
 @router.get('/{user_id}/', response_model=TravelList)
 def get_travel(
     session: Session,  # type: ignore
@@ -49,8 +50,9 @@ def get_travel(
         return travel_list
     return None
 
+
 @router.get('/search/{travel_id}/', response_model=TravelPublic)
-def get_travel(
+def get_travel_by_id(
     session: Session,  # type: ignore
     travel_id: int,
 ):

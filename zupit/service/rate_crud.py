@@ -1,10 +1,11 @@
 from http import HTTPStatus
 from typing import Optional
+
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from zupit.schemas.rate import Rate, RatePublic
+from zupit.schemas.rate import Rate
 
 
 def create_rating_db(rating: Rate, session: Session):

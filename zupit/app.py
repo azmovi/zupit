@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import get_session
-from .router import rate, cars, drivers, offer, profile, travels, users
+from .router import cars, drivers, offer, profile, rate, travels, users
 from .utils import get_current_driver, get_current_user
 
 app = FastAPI()
@@ -119,5 +119,3 @@ def car(
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER
     )
-
-

@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
 from zupit.database import get_session
 from zupit.schemas.rate import Rate, RatePublic
@@ -12,6 +12,7 @@ from zupit.utils import get_current_user
 
 router = APIRouter(prefix='/rate', tags=['rate'])
 templates = Jinja2Templates(directory='zupit/templates')
+
 
 @router.post(
     '/',
@@ -24,7 +25,7 @@ def create_rating(
     rate: Rate = Depends(Rate.as_form),
 ) -> RedirectResponse:
     try:
-        rating_db = get_rating_db(rate.user_id, session)
+        rating_db = get_rating_db(rate.recipient_id, session)
         if rating_db:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='Rate already exists'
@@ -47,18 +48,28 @@ def get_rating(user_id: int, session: Session = Depends(get_session)):
         return db_user
     return None
 
+
 @router.get('/rate-driver/{user_id}', response_class=HTMLResponse)
 def rate_driver(
     request: Request,
     user_id: int,
-    session: Session = Depends(get_session),  # Use Depends to inject the session
+    session: Session = Depends(
+        get_session
+    ),  # Use Depends to inject the session
 ):
-    user = get_current_user(request, session)  # Assuming this is a helper function in your code
+    user = get_current_user(
+        request, session
+    )  # Assuming this is a helper function in your code
     error = request.session.get('error', None)
     if user:
         return templates.TemplateResponse(
             name='rate/rate-driver.html',  # Path to the template
-            context={'request': request, 'user': user, 'user_id': user_id, 'error': error},
+            context={
+                'request': request,
+                'user': user,
+                'user_id': user_id,
+                'error': error,
+            },
         )
     return RedirectResponse(
         url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
