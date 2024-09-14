@@ -1,3 +1,4 @@
+from datetime import date
 from http import HTTPStatus
 from typing import Annotated, Optional
 
@@ -163,6 +164,32 @@ def get_travel_by_user(
     for travel in travels:
         list_travel.append(make_travel_public(travel))
     return TravelList(travels=list_travel)
+
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
+from http import HTTPStatus
+from typing import Optional
+
+def search_travel_db(
+    session: Session,  # type: ignore
+    leaving: str,
+    going: str,
+    day: date,
+) -> Optional[TravelList]:
+    sql = text('SELECT * FROM search_travel(:leaving, :going, :day)')
+    try:
+        travels = session.execute(
+            sql, {'leaving': leaving, 'going': going, 'day': day}
+        ).fetchall()
+        list_travel = [make_travel_public(travel) for travel in travels]
+        return TravelList(travels=list_travel)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str(e)
+        )
 
 
 def make_travel_public(result) -> TravelPublic:

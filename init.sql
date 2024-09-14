@@ -717,6 +717,71 @@ END;
 $$;
 
 
+CREATE FUNCTION search_travel(
+    p_leaving VARCHAR,
+    p_going VARCHAR,
+    p_day DATE
+) RETURNS SETOF travel_public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        t.id,
+        t.status,
+        t.user_id,
+        t.renavam,
+        t.departure,
+        o.space AS origin_space,
+        ao.cep AS origin_cep,
+        ao.street AS origin_street,
+        ao.city AS origin_city,
+        ao.state AS origin_state,
+        ao.district AS origin_district,
+        ao.house_number AS origin_house_number,
+        m.space AS middle_space,
+        m.duration AS middle_duration,
+        m.distance AS middle_distance,
+        m.price AS middle_price,
+        am.cep AS middle_cep, 
+        am.street AS middle_street,
+        am.city AS middle_city,
+        am.state AS middle_state,
+        am.district AS middle_district,
+        am.house_number AS middle_house_number,
+        d.duration AS destination_duration,
+        d.distance AS destination_distance,
+        d.price AS destination_price,
+        ad.cep AS destination_cep,
+        ad.street AS destination_street,
+        ad.city AS destination_city,
+        ad.state AS destination_state,
+        ad.district AS destination_district,
+        ad.house_number AS destination_house_number,
+        t.arrival,
+        t.involved
+    FROM travels t
+    LEFT JOIN origins o ON t.origin_id = o.id
+    LEFT JOIN address ao ON o.address_id = ao.id
+    LEFT JOIN middles m ON t.middle_id = m.id
+    LEFT JOIN address am ON m.address_id = am.id
+    LEFT JOIN destinations d ON t.destination_id = d.id
+    LEFT JOIN address ad ON d.address_id = ad.id
+    WHERE 
+      t.departure::DATE = p_day
+      AND t.status = TRUE
+      AND (
+            (ao.city = p_leaving OR ao.street = p_leaving)
+            OR (am.city = p_leaving OR am.street = p_leaving)
+        )
+      AND (
+            (ad.city = p_going OR ad.street = p_going)
+            OR (am.city = p_going OR am.street = p_going)
+        );
+END;
+$$;
+
+
 -----------------------------------------------------------------
 ---------------------------AVALIACAO-------------------------------
 -----------------------------------------------------------------

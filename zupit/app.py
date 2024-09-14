@@ -48,8 +48,11 @@ def search_travel(
     session: Session,  # type: ignore
 ):
     user = get_current_user(request, session)
+    error = request.session.get('error', None)
     return templates.TemplateResponse(
-        request=request, name='search-travel.html', context={'user': user}
+        request=request,
+        name='search-travel.html',
+        context={'user': user, 'error': error},
     )
 
 
