@@ -192,7 +192,9 @@ def make_travel_public(result) -> TravelPublic:
                 district=result[20],
                 house_number=result[21],
             ),
-        ) if result[12] is not None else None,
+        )
+        if result[12] is not None
+        else None,
         destination=Destination(
             duration=result[22],
             distance=result[23],
