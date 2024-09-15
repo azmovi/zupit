@@ -6,8 +6,12 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.rate import Rate, RatePublic, RateList
-from zupit.service.rate_crud import create_rating_db, get_rating_db, get_rates_by_user
+from zupit.schemas.rate import Rate, RateList, RatePublic
+from zupit.service.rate_crud import (
+    create_rating_db,
+    get_rates_by_user,
+    get_rating_db,
+)
 from zupit.utils import get_current_user
 
 router = APIRouter(prefix='/rate', tags=['rate'])
@@ -32,7 +36,9 @@ def create_rating(
             )
         rating = create_rating_db(rate, session)
         request.session['rate'] = rating
-        return RedirectResponse(url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER)
+        return RedirectResponse(
+            url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
+        )
 
     except HTTPException as exc:
         request.session['error'] = exc.detail
@@ -42,10 +48,13 @@ def create_rating(
 
 
 @router.get('/{recipient_id}', response_model=RateList)
-def get_rating(recipient_id: int, session: Session = Depends(get_session)):
+def get_rating_user(
+    recipient_id: int, session: Session = Depends(get_session)
+):
     if rate_list := get_rates_by_user(session, recipient_id):
         return rate_list
     return None
+
 
 @router.get('/search/{rate_id}', response_model=RatePublic)
 def get_rating(rate_id: int, session: Session = Depends(get_session)):

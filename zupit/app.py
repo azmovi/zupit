@@ -48,7 +48,7 @@ def search_travel(
     session: Session,  # type: ignore
 ):
     user = get_current_user(request, session)
-    error = request.session.get('error', None)
+    error = request.session.pop('error', None)
     return templates.TemplateResponse(
         request=request,
         name='search-travel.html',
@@ -91,7 +91,10 @@ def form_sign_up(request: Request):
 
 @app.get('/sign-in', response_class=HTMLResponse)
 def form_sign_in(request: Request):
-    return templates.TemplateResponse(request=request, name='sign-in.html')
+    error = request.session.pop('error', None)
+    return templates.TemplateResponse(
+        request=request, name='sign-in.html', context={'error': error}
+    )
 
 
 @app.get('/create-driver', response_class=HTMLResponse)

@@ -119,3 +119,18 @@ def test_get_travels_from_user(client, full_travel):
     resposta.get('travels')[0].pop('departure')
 
     assert resposta == {'travels': travels}
+
+
+def test_search_travel(
+    client, travel: TravelPublic, full_travel: TravelPublic
+):
+    payload = {
+        'leaving': travel.origin.address.city,
+        'going': full_travel.middle.address.city
+        if full_travel.middle
+        else 'deu ruimk',
+        'day': travel.departure.date(),
+    }
+
+    response = client.post('travels/search-travels', data=payload)
+    assert response.status_code == HTTPStatus.OK

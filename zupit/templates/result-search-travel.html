@@ -64,7 +64,7 @@
         }
     </style>
 </head>
-<body data-user-id="{{ user.id }}">
+<body>
     <section id="historico">
         {% include 'navbar.html' %}
 
@@ -80,20 +80,26 @@
                     <th>Intermediário</th>
                     <th>Destino</th>
                     <th>Chegada</th>
+                    <th>Pegar essa carona </th>
                 </tr>
             </thead>
             <tbody>
-                {% if travels %}
+                {% if travels | length > 0 %}
                     {% for travel in travels %}
                         <tr>
-                            <td>{{ travel[1][0].id }}</td>
-                            <td>{{ travel[1][0].status }}</td>
-                            <td>{{ travel[1][0].renavam }}</td>
-                            <td>{{ travel[1][0].departure }}</td>
-                            <td>{{ travel[1][0].origin.address.city }}</td>
-                            <td>{{ travel[1][0].middle.address.city }}</td>
-                            <td>{{ travel[1][0].destination.address.city }}</td>
-                            <td>{{ travel[1][0].arrival }}</td>
+                            <td>{{ travel.id }}</td>
+                            <td>{{ travel.status }}</td>
+                            <td>{{ travel.renavam }}</td>
+                            <td>{{ travel.departure }}</td>
+                            <td>{{ travel.origin.address.city }}</td>
+                            {% if travel.middle %}
+                                <td>{{ travel.middle.address.city }}</td>
+                            {% else %}
+                                <td>Not exists </td>
+                            {% endif %}
+                            <td>{{ travel.destination.address.city }}</td>
+                            <td>{{ travel.arrival }}</td>
+                            <td><a href="/travels/confirm_travel/{{ travel.id }}" onclick="return confirmTravel()">Pegar Essa</a></td>
                         </tr>
                     {% endfor %}
                 {% else %}
@@ -104,13 +110,10 @@
             </tbody>
         </table>
     </section>
-    <script src="{{ url_for('static', path='script.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const user_id = document.body.getAttribute('data-user-id');
-            console.log("user_id:", user_id);
-            get_travels(user_id);
-        });
+        function confirmTravel() {
+            return confirm("Você tem certeza que deseja pegar essa carona?");
+        }
     </script>
 </body>
 </html>

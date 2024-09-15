@@ -201,10 +201,10 @@ def travel(session, user, origin, destination, car1) -> Optional[TravelPublic]:
 
 @pytest.fixture
 def full_travel(
-    session, user, origin, middle, destination, car1
+    session, user2, origin, middle, destination, car1
 ) -> Optional[TravelPublic]:
     travel = Travel(
-        user_id=user.id,
+        user_id=user2.id,
         renavam=car1.renavam,
         space=4,
         departure=datetime(2225, 2, 2, 5, 2, tzinfo=timezone.utc),

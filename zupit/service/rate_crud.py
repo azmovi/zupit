@@ -58,6 +58,7 @@ def get_rating_db(id: int, session: Session) -> Optional[Rate]:
         )
     return None
 
+
 def get_rates_by_user(
     session: Session,  # type: ignore
     recipient_id: int,
@@ -65,7 +66,7 @@ def get_rates_by_user(
     sql = text('SELECT * FROM get_rates_by_user(:recipient_id)')
     list_rate = []
     rates = session.execute(sql, {'recipient_id': recipient_id}).fetchall()
-    
+
     for rate in rates:
         rate_instance = RatePublic(
             id=rate[0],
@@ -77,5 +78,5 @@ def get_rates_by_user(
             creation=rate[6],
         )
         list_rate.append(rate_instance)
-    
+
     return RateList(rates=list_rate)
