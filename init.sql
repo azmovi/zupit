@@ -312,7 +312,7 @@ $$;
 CREATE TYPE direction AS ENUM ('PICK_UP', 'PICK_OFF', 'MIDDLE');
 
 CREATE TABLE address (
-    id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY NOT NULL,
     cep VARCHAR(9) NOT NULL,
     street VARCHAR(50) NOT NULL,
     city VARCHAR(50) NOT NULL,
@@ -402,7 +402,7 @@ CREATE TABLE travels (
     middle_id INTEGER,
     destination_id INTEGER NOT NULL,
     arrival TIMESTAMP WITH TIME ZONE NOT NULL,
-    involved INTEGER[] CHECK (array_length(involved, 1) <= 4),
+    involved INTEGER[] CHECK (array_length(involved, 1) <= 4) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (renavam) REFERENCES cars(renavam) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (origin_id) REFERENCES origins(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -712,10 +712,9 @@ BEGIN
     LEFT JOIN address am ON m.address_id = am.id
     LEFT JOIN destinations d ON t.destination_id = d.id
     LEFT JOIN address ad ON d.address_id = ad.id
-    WHERE t.user_id = p_user_id;
+    WHERE t.user_id = p_user_id OR p_user_id = ANY(t.involved);
 END;
 $$;
-
 
 CREATE FUNCTION search_travel(
     p_leaving VARCHAR,
@@ -732,35 +731,35 @@ BEGIN
         t.user_id,
         t.renavam,
         t.departure,
-        o.space AS origin_space,
-        ao.cep AS origin_cep,
-        ao.street AS origin_street,
-        ao.city AS origin_city,
-        ao.state AS origin_state,
-        ao.district AS origin_district,
-        ao.house_number AS origin_house_number,
-        m.space AS middle_space,
-        m.duration AS middle_duration,
-        m.distance AS middle_distance,
-        m.price AS middle_price,
-        am.cep AS middle_cep, 
-        am.street AS middle_street,
-        am.city AS middle_city,
-        am.state AS middle_state,
-        am.district AS middle_district,
-        am.house_number AS middle_house_number,
-        d.duration AS destination_duration,
-        d.distance AS destination_distance,
-        d.price AS destination_price,
-        ad.cep AS destination_cep,
-        ad.street AS destination_street,
-        ad.city AS destination_city,
-        ad.state AS destination_state,
-        ad.district AS destination_district,
-        ad.house_number AS destination_house_number,
+        o.space,
+        ao.cep,
+        ao.street,
+        ao.city,
+        ao.state,
+        ao.district,
+        ao.house_number,
+        m.space,
+        m.duration,
+        m.distance,
+        m.price,
+        am.cep, 
+        am.street,
+        am.city,
+        am.state,
+        am.district,
+        am.house_number,
+        d.duration,
+        d.distance,
+        d.price,
+        ad.cep,
+        ad.street,
+        ad.city,
+        ad.state,
+        ad.district,
+        ad.house_number,
         t.arrival,
         t.involved
-    FROM travels t
+    FROM travels AS t
     LEFT JOIN origins o ON t.origin_id = o.id
     LEFT JOIN address ao ON o.address_id = ao.id
     LEFT JOIN middles m ON t.middle_id = m.id
@@ -769,15 +768,61 @@ BEGIN
     LEFT JOIN address ad ON d.address_id = ad.id
     WHERE 
       t.departure::DATE = p_day
-      AND t.status = TRUE
+      AND t.status = TRUE 
+      AND COALESCE(array_length(t.involved, 1), 0) < 4
       AND (
-            (ao.city = p_leaving OR ao.street = p_leaving)
-            OR (am.city = p_leaving OR am.street = p_leaving)
-        )
-      AND (
-            (ad.city = p_going OR ad.street = p_going)
-            OR (am.city = p_going OR am.street = p_going)
-        );
+        (ao.city = p_leaving OR am.city = p_leaving) 
+        AND (ad.city = p_going OR am.city = p_going)
+        AND NOT (am.city = p_leaving AND am.city = p_going)
+      );
+END;
+$$;
+
+
+CREATE FUNCTION valid_confirm_travel(
+    p_user_id INTEGER,
+    p_travel_id INTEGER
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    is_valid BOOLEAN := TRUE;
+    rec RECORD;
+BEGIN
+    FOR rec IN
+        SELECT arrival, departure 
+        FROM get_travel_by_user(p_user_id)
+    LOOP
+        IF EXISTS (
+            SELECT 1
+            FROM travels AS t
+            WHERE t.user_id = p_user_id 
+            OR p_user_id = ANY(t.involved)
+            OR (rec.departure < t.arrival AND rec.arrival > t.departure)
+        ) THEN
+            is_valid := FALSE;
+            EXIT;
+        END IF;
+    END LOOP;
+
+    RETURN is_valid;
+END;
+$$;
+
+CREATE FUNCTION confirm_travel(
+    p_user_id INTEGER,
+    p_travel_id INTEGER
+) RETURNS VOID 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF valid_confirm_travel(p_user_id, p_travel_id) THEN
+        UPDATE travels
+        SET involved = array_append(involved, p_user_id)
+        WHERE id = p_travel_id;
+    ELSE
+        RAISE EXCEPTION 'Invalid confirm travel';
+    END IF;
 END;
 $$;
 

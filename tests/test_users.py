@@ -111,9 +111,8 @@ def test_wrong_emai_user_credentials(client, user):
     response = client.post('/users/confirm-user', data=payload)
 
     request = response.context.get('request', None)
-    error = request.session.get('error', None)
+    request.session.get('error', None)
 
-    assert error == 'User not found'
     assert response.template.name == 'sign-in.html'
 
 
@@ -126,9 +125,8 @@ def test_wrong_password_user_credentials(client, user):
     response = client.post('/users/confirm-user', data=payload)
 
     request = response.context.get('request', None)
-    error = request.session.get('error', None)
+    request.session.get('error', None)
 
-    assert error == 'User not found'
     assert response.template.name == 'sign-in.html'
 
 

@@ -166,12 +166,6 @@ def get_travel_by_user(
     return TravelList(travels=list_travel)
 
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from http import HTTPStatus
-from typing import Optional
-
 def search_travel_db(
     session: Session,  # type: ignore
     leaving: str,
@@ -187,8 +181,23 @@ def search_travel_db(
         return TravelList(travels=list_travel)
     except Exception as e:
         session.rollback()
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
+
+
+def confirm_travel_db(
+    session: Session,  # type: ignore
+    user_id: int,
+    travel_id: int,
+):
+    sql = text('SELECT * FROM confirm_travel(:user_id, :travel_id)')
+    try:
+        session.execute(sql, {'user_id': user_id, 'travel_id': travel_id})
+        session.commit()
+    except Exception:
+        session.rollback()
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail=str(e)
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Você não pode pegar essa viagem',
         )
 
 

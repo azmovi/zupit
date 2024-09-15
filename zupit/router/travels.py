@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from zupit.database import get_session
 from zupit.schemas.travels import Travel, TravelList, TravelPublic
-from zupit.service.travels_crud import (  # get_travel_by_user
+from zupit.service.travels_crud import (
+    confirm_travel_db,
     create_travel_db,
     get_travel_by_user,
     get_travel_db,
@@ -69,17 +70,16 @@ def get_travel_by_id(
 def search_travels(
     request: Request,
     session: Session,  # type: ignore
-    leaving: str = Form(...),
-    going: str = Form(...),
-    day: date = Form(...),
+    leaving: Annotated[str, Form()],
+    going: Annotated[str, Form()],
+    day: Annotated[date, Form()],
 ):
-    user = get_current_user(request, session)
     try:
         travel_list = search_travel_db(session, leaving, going, day)
-        print(travel_list)
+        travels = travel_list.travels if travel_list else []
         return templates.TemplateResponse(
             'result-search-travel.html',
-            {'request': request, 'user': user, 'travels': travel_list},
+            {'request': request, 'travels': travels},
         )
     except HTTPException as exc:
         request.session['error'] = exc.detail
@@ -87,3 +87,28 @@ def search_travels(
             url='/search-travel', status_code=HTTPStatus.SEE_OTHER
         )
 
+
+@router.get('/confirm_travel/{travel_id}', response_class=HTMLResponse)
+def confirm_travel(
+    request: Request,
+    session: Session,  # type: ignore
+    travel_id: int,
+):
+    try:
+        if user := get_current_user(request, session):
+            confirm_travel_db(session, user.id, travel_id)
+
+            return templates.TemplateResponse(
+                request=request,
+                name='profile/my-travels.html',
+                context={'user': user},
+            )
+        request.session['error'] = 'Você precisa estar logado'
+        return RedirectResponse(
+            url='/sign-in', status_code=HTTPStatus.SEE_OTHER
+        )
+    except HTTPException as exc:
+        request.session['error'] = exc.detail
+        return RedirectResponse(
+            url='/search-travel', status_code=HTTPStatus.SEE_OTHER
+        )
