@@ -10,12 +10,11 @@ from sqlalchemy.orm import Session
 from zupit.database import get_session
 from zupit.schemas.travels import Travel, TravelList, TravelPublic
 from zupit.service.travels_crud import (
+    confirm_travel_db,
     create_travel_db,
     get_travel_by_user,
     get_travel_db,
     search_travel_db,
-    confirm_travel_db,
-    
 )
 from zupit.utils import get_current_user
 
@@ -93,7 +92,7 @@ def search_travels(
 def confirm_travel(
     request: Request,
     session: Session,  # type: ignore
-    travel_id: int
+    travel_id: int,
 ):
     try:
         if user := get_current_user(request, session):
@@ -102,14 +101,14 @@ def confirm_travel(
             return templates.TemplateResponse(
                 request=request,
                 name='profile/my-travels.html',
-                context={'user': user}
+                context={'user': user},
             )
-        request.session['error'] = "Você precisa estar logado"
+        request.session['error'] = 'Você precisa estar logado'
         return RedirectResponse(
             url='/sign-in', status_code=HTTPStatus.SEE_OTHER
         )
     except HTTPException as exc:
-        request.session['error'] = exc.detail # nao pode entrar nessa viagem 
+        request.session['error'] = exc.detail
         return RedirectResponse(
             url='/search-travel', status_code=HTTPStatus.SEE_OTHER
         )

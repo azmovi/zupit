@@ -712,10 +712,9 @@ BEGIN
     LEFT JOIN address am ON m.address_id = am.id
     LEFT JOIN destinations d ON t.destination_id = d.id
     LEFT JOIN address ad ON d.address_id = ad.id
-    WHERE t.user_id = p_user_id;
+    WHERE t.user_id = p_user_id OR p_user_id = ANY(t.involved);
 END;
 $$;
-
 
 CREATE FUNCTION search_travel(
     p_leaving VARCHAR,
@@ -760,7 +759,7 @@ BEGIN
         ad.house_number,
         t.arrival,
         t.involved
-    FROM travels t
+    FROM travels AS t
     LEFT JOIN origins o ON t.origin_id = o.id
     LEFT JOIN address ao ON o.address_id = ao.id
     LEFT JOIN middles m ON t.middle_id = m.id
@@ -776,6 +775,54 @@ BEGIN
         AND (ad.city = p_going OR am.city = p_going)
         AND NOT (am.city = p_leaving AND am.city = p_going)
       );
+END;
+$$;
+
+
+CREATE FUNCTION valid_confirm_travel(
+    p_user_id INTEGER,
+    p_travel_id INTEGER
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    is_valid BOOLEAN := TRUE;
+    rec RECORD;
+BEGIN
+    FOR rec IN
+        SELECT arrival, departure 
+        FROM get_travel_by_user(p_user_id)
+    LOOP
+        IF EXISTS (
+            SELECT 1
+            FROM travels AS t
+            WHERE t.user_id = p_user_id 
+            OR p_user_id = ANY(t.involved)
+            OR (rec.departure < t.arrival AND rec.arrival > t.departure)
+        ) THEN
+            is_valid := FALSE;
+            EXIT;
+        END IF;
+    END LOOP;
+
+    RETURN is_valid;
+END;
+$$;
+
+CREATE FUNCTION confirm_travel(
+    p_user_id INTEGER,
+    p_travel_id INTEGER
+) RETURNS VOID 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF valid_confirm_travel(p_user_id, p_travel_id) THEN
+        UPDATE travels
+        SET involved = array_append(involved, p_user_id)
+        WHERE id = p_travel_id;
+    ELSE
+        RAISE EXCEPTION 'Invalid confirm travel';
+    END IF;
 END;
 $$;
 

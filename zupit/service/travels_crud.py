@@ -183,12 +183,22 @@ def search_travel_db(
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(e))
 
+
 def confirm_travel_db(
-    session: Session, # type: ignore
+    session: Session,  # type: ignore
     user_id: int,
     travel_id: int,
 ):
-    pass
+    sql = text('SELECT * FROM confirm_travel(:user_id, :travel_id)')
+    try:
+        session.execute(sql, {'user_id': user_id, 'travel_id': travel_id})
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Você não pode pegar essa viagem',
+        )
 
 
 def make_travel_public(result) -> TravelPublic:
