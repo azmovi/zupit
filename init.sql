@@ -1006,6 +1006,9 @@ EXECUTE FUNCTION update_rating();
 EXECUTE FUNCTION update_driver_rating();
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -1066,3 +1069,4 @@ BEGIN
     WHERE c.first = p_user_id OR c.second = p_user_id;
 END;
 $$;
+
