@@ -91,7 +91,6 @@ def check_rating_db(
         )
     return None
 
-
 def get_rates_by_user(
     session: Session,  # type: ignore
     recipient_id: int,

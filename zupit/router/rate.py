@@ -30,13 +30,6 @@ def create_rating(
     rate: Rate = Depends(Rate.as_form),
 ) -> RedirectResponse:
     try:
-        rating_db = check_rating_db(
-            rate.author_id, rate.recipient_id, rate.rate_type.value, session
-        )
-        if rating_db:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT, detail='Rate already exists'
-            )
         rating = create_rating_db(rate, session)
         request.session['rate'] = rating
         return RedirectResponse(
@@ -47,7 +40,7 @@ def create_rating(
         request.session['error'] = exc.detail
         return RedirectResponse(
             url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
-        )
+        ) 
 
 
 @router.get('/{recipient_id}', response_model=RateList)
