@@ -46,8 +46,7 @@ CREATE FUNCTION create_user(
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
-    p_sex gender,
-    p_passenger_rating FLOAT
+    p_sex gender
 ) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
@@ -55,7 +54,7 @@ DECLARE
     v_user_id INTEGER;
 BEGIN
     INSERT INTO users (name, email, password, birthday, sex, icon, passenger_rating, user_status)
-    VALUES (p_name, p_email, p_password, p_birthday, p_sex, NULL, p_passenger_rating, TRUE)
+    VALUES (p_name, p_email, p_password, p_birthday, p_sex, NULL, 0.0, TRUE)
     RETURNING id INTO v_user_id;
 
     RETURN v_user_id;
@@ -74,13 +73,13 @@ BEGIN
 END;
 $$;
 
+
 CREATE FUNCTION create_brazilian(
     p_name VARCHAR,
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
     p_sex gender,
-    p_passenger_rating FLOAT,
     p_cpf VARCHAR
 ) RETURNS SETOF user_public
 LANGUAGE plpgsql
@@ -88,13 +87,22 @@ AS $$
 DECLARE 
     v_user_id INTEGER;
 BEGIN
-    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex, p_passenger_rating);
+    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
+
     PERFORM _create_brazilian(p_cpf, v_user_id);
 
     RETURN QUERY 
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_passenger_rating, p_cpf;
+    SELECT 
+        u.id, u.name, u.email, u.birthday, u.sex, u.icon, u.passenger_rating, b.cpf
+    FROM 
+        users u 
+    LEFT JOIN 
+        brazilians b ON u.id = b.user_id
+    WHERE 
+        u.id = v_user_id;
 END;
 $$;
+
 
 CREATE FUNCTION _create_foreigner(
     p_rnm VARCHAR,
@@ -114,7 +122,6 @@ CREATE FUNCTION create_foreigner(
     p_password VARCHAR,
     p_birthday DATE,
     p_sex gender,
-    p_passenger_rating FLOAT,
     p_rnm VARCHAR
 ) RETURNS SETOF user_public
 LANGUAGE plpgsql
@@ -122,11 +129,18 @@ AS $$
 DECLARE 
     v_user_id INTEGER;
 BEGIN
-    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex, p_passenger_rating);
+    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
     PERFORM _create_foreigner(p_rnm, v_user_id);
 
-    RETURN QUERY
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_passenger_rating, p_rnm;
+    RETURN QUERY 
+    SELECT 
+        u.id, u.name, u.email, u.birthday, u.sex, u.icon, u.passenger_rating, f.rnm
+    FROM 
+        users u 
+    LEFT JOIN 
+        foreigners f ON u.id = v_user_id
+    WHERE 
+        u.id = v_user_id;
 END;
 $$;
 

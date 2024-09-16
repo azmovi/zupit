@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 from zupit.database import get_session
 from zupit.schemas.rate import Rate, RateList, RatePublic
 from zupit.service.rate_crud import (
+    check_rating_db,
     create_rating_db,
     get_rates_by_user,
     get_rating_db,
-    check_rating_db,
 )
 from zupit.utils import get_current_user
 
@@ -30,7 +30,9 @@ def create_rating(
     rate: Rate = Depends(Rate.as_form),
 ) -> RedirectResponse:
     try:
-        rating_db = check_rating_db(rate.author_id, rate.recipient_id, rate.rate_type, session)
+        rating_db = check_rating_db(
+            rate.author_id, rate.recipient_id, rate.rate_type.value, session
+        )
         if rating_db:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='Rate already exists'
@@ -91,8 +93,9 @@ def rate_driver(
         url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
     )
 
+
 @router.get('/rate-passenger/{user_id}', response_class=HTMLResponse)
-def rate_driver(
+def rate_passenger(
     request: Request,
     user_id: int,
     session: Session = Depends(

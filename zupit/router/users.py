@@ -34,6 +34,7 @@ def create_user(
     try:
         user_db = get_user_db(user.email, session)
         if user_db:
+            print("foi aqui mesmo na real")
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='User already exists'
             )

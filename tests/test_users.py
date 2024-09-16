@@ -8,6 +8,7 @@ def test_create_brazilian(client):
         'email': 'antonio@example.com',
         'birthday': '2000-01-01',
         'sex': 'MAN',
+        'passenger_rating': 0,
         'icon': None,
     }
     payload = {
@@ -32,6 +33,7 @@ def test_create_foreigner(client, session):
         'email': 'antonio@example.com',
         'birthday': '2000-01-01',
         'sex': 'MAN',
+        'passenger_rating': 0,
         'icon': None,
     }
     payload = {

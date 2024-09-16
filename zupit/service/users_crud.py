@@ -41,12 +41,11 @@ def create_user_db(user: User, session: Session) -> int:
                 'password': user.password,
                 'birthday': user.birthday,
                 'sex': user.sex.value,
-                'passenger_rating': user.passenger_rating,
                 'doc': doc,
             },
         ).fetchone()
         session.commit()
-    except Exception:
+    except Exception as e:
         session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail='Input invalid'
