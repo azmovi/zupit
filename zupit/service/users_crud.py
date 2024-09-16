@@ -41,6 +41,7 @@ def create_user_db(user: User, session: Session) -> int:
                 'password': user.password,
                 'birthday': user.birthday,
                 'sex': user.sex.value,
+                'passenger_rating': user.passenger_rating,
                 'doc': doc,
             },
         ).fetchone()
@@ -77,7 +78,8 @@ def get_user_db(campo: Union[str, int], session: Session) -> Optional[Public]:
             birthday=user_db[3],
             sex=Gender(user_db[4]),
             icon=user_db[5],
-            doc=user_db[6],
+            passenger_rating=user_db[6],
+            doc=user_db[7],
         )
     return None
 

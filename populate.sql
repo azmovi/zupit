@@ -6,6 +6,7 @@ SELECT create_brazilian(
     '123',
     '1990-05-15',
     'MAN',
+    '5.0',
     '12345678901'
 );
 
@@ -15,6 +16,7 @@ SELECT create_foreigner(
     'senha456',
     '1985-09-10',
     'WOMAN',
+    '4.6',
     'A1234567'
 );
 
@@ -80,17 +82,8 @@ SELECT create_travel(
     '20km'
 );
 
-SELECT create_travel(
+SELECT confirm_travel(
     2,
-    '00123456789',
-    2,
-    '2024-09-15 08:00:00+00',
-    (SELECT id FROM address WHERE cep = '23456-789'),
-    NULL,
-    NULL,
-    NULL,
-    (SELECT id FROM address WHERE cep = '34567-890'),
-    1800,
-    '20km'
+    1
 );
 

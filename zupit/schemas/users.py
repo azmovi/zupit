@@ -23,6 +23,7 @@ class User(BaseModel):
     birthday: date
     sex: Gender
     nationality: Nationality
+    passenger_rating: float
     cpf: Optional[str] = None
     rnm: Optional[str] = None
 
@@ -35,6 +36,7 @@ class User(BaseModel):
         birthday: str = Form(...),
         sex: str = Form(...),
         nationality: str = Form(...),
+        passenger_rating: float = Form(...),
         cpf: str = Form(None),
         rnm: str = Form(None),
     ):
@@ -45,6 +47,7 @@ class User(BaseModel):
             birthday=date.fromisoformat(birthday),
             sex=Gender(sex),
             nationality=Nationality(nationality),
+            passenger_rating=passenger_rating,
             cpf=cpf,
             rnm=rnm,
         )
@@ -57,6 +60,7 @@ class Public(BaseModel):
     birthday: date
     sex: Gender
     icon: Optional[bytes]
+    passenger_rating: float
     doc: str
 
 
@@ -67,6 +71,7 @@ class Brazilian(BaseModel):
     birthday: date
     sex: Gender
     icon: Optional[bytes] = None
+    passenger_rating: float
     cpf: str
 
 
@@ -77,6 +82,7 @@ class Foreigner(BaseModel):
     birthday: date
     sex: Gender
     icon: Optional[bytes] = None
+    passenger_rating: float
     rnm: str
 
 

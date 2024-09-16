@@ -61,22 +61,17 @@ function get_travels(user_id) {
             if (data && data.travels && data.travels.length > 0) {
                 data.travels.forEach(travel => {
                     console.log("Dados da viagem atual:", travel);
-
                     // Extrair data e hora de departure
                     const departure = new Date(travel.departure);
                     const departureDate = departure.toLocaleDateString();  // Ex: "05/09/2024"
                     const departureTime = departure.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });  // Ex: "14:00"
-
                     // Extrair data e hora de arrival
                     const arrival = new Date(travel.arrival);
-
                     // Calcular a duração da viagem
                     const durationMs = arrival.getTime() - departure.getTime();  // Diferença em milissegundos
                     const durationHours = Math.floor(durationMs / (1000 * 60 * 60));  // Converter para horas
                     const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));  // Restante em minutos
-
                     const duration = `${durationHours}h ${durationMinutes}min`;  // Formatar a duração
-
                     // Definir valores para a tabela
                     const originCity = travel.origin.address.city || "Cidade de origem não encontrada";
                     const destinationCity = travel.destination.address.city || "Cidade de destino não encontrada";
@@ -92,7 +87,6 @@ function get_travels(user_id) {
                         <td>${duration}</td>
                         <td><a href="/trip-participants/${travel.id}" class="button-details">Participantes</a></td>
                     `;
-                    console.log("id da viagem:", travel.id);
                     console.log("Linha adicionada à tabela:", row.innerHTML);
                     tableBody.appendChild(row);
                 });
@@ -104,8 +98,57 @@ function get_travels(user_id) {
         .catch(error => console.error('Erro ao carregar viagens:', error));
 }
 
+function get_passenger_info(travel_id) {
+    fetch(`/travels/search/${travel_id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar a lista de viagens');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && Array.isArray(data.involved) && data.involved.length > 0) {
+                const passengers = data.involved.filter(id => id !== data.user_id);  // Filtra para excluir o motorista
+                const tableBody = document.getElementById('travel-passengers-table-body');
+                tableBody.innerHTML = ''; // Limpa a tabela antes de adicionar passageiros
+                
+                if (passengers.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3">Nenhum passageiro encontrado.</td></tr>';
+                } else {
+                    passengers.forEach(user_id => {
+                        fetch(`/users/${user_id}/`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Erro ao buscar detalhes do usuário');
+                                }
+                                return response.json();  // Converte a resposta para JSON
+                            })
+                            .then(userData => {
+                                if (userData && userData.name) {
+                                    const userName = userData.name;  // Extrai o nome do usuário
+                                    const passengerRating = userData.passenger_rating.toFixed(1) || "Sem avaliação";  // Extrai a avaliação ou mostra uma mensagem padrão
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td>${userName}</td>
+                                        <td>${passengerRating}</td>
+                                        <td><a href="/rate/rate-passenger/${user_id}" class="button-details">Avaliar</a></td>
+                                    `;
+                                    tableBody.appendChild(row);
+                                } else {
+                                    throw new Error('Nome do usuário não encontrado.');
+                                }
+                            })
+                            .catch(error => console.error('Erro ao carregar detalhes do passageiro:', error));
+                    });
+                }
+            } else {
+                throw new Error('Nenhum passageiro encontrado para essa viagem.');
+            }
+        })
+        .catch(error => console.error('Erro ao carregar viagem:', error));
+}
+
 function get_driver_info(travel_id) {
-    // Faz a requisição para obter os detalhes da viagem
     fetch(`/travels/search/${travel_id}/`)
         .then(response => {
             if (!response.ok) {
@@ -117,7 +160,6 @@ function get_driver_info(travel_id) {
             if (data && typeof data.user_id !== 'undefined') {
                 const user_id = data.user_id;  // Extrai o user_id
                 const renavam = data.renavam;  // Extrai o renavam
-                // Faz uma nova requisição para buscar os detalhes do usuário
                 return fetch(`/users/${user_id}/`)
                     .then(response => {
                         if (!response.ok) {
@@ -138,7 +180,6 @@ function get_driver_info(travel_id) {
             }
         })
         .then(({ userName, user_id, renavam }) => {
-            // Faz a requisição para buscar os detalhes do motorista
             return fetch(`/drivers/${user_id}/`)
                 .then(response => {
                     if (!response.ok) {
@@ -148,11 +189,7 @@ function get_driver_info(travel_id) {
                 })
                 .then(driverData => {
                     if (driverData && typeof driverData.rating !== 'undefined') {
-                        // Usa toFixed(1) para exibir o rating com uma casa decimal
                         const driverRating = driverData.rating.toFixed(1);  
-                        console.log('rating motorista:', driverRating);
-                        
-                        // Agora faz a requisição para buscar os detalhes do carro usando o renavam
                         return fetch(`/cars/search/${renavam}/`)
                             .then(response => {
                                 if (!response.ok) {
@@ -171,8 +208,6 @@ function get_driver_info(travel_id) {
                                         <td>${driverRating}</td>
                                         <td><a href="/rate/rate-driver/${user_id}" class="button-details">Avaliar</a></td>
                                     `;
-
-                                    // Adiciona a linha na tabela
                                     const tableBody = document.getElementById('travel-table-body');
                                     tableBody.innerHTML = ''; // Limpar a tabela antes de popular
                                     if (tableBody) {
