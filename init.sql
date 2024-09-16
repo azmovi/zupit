@@ -855,7 +855,7 @@ CREATE TABLE Rate (
 );
 
 --função para criar uma avaliacao nova
-CREATE FUNCTION create_driver_rating(
+CREATE FUNCTION create_rating(
     p_author_id INTEGER,
     p_recipient_id INTEGER,
     p_rate_type rating_type,
