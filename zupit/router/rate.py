@@ -30,7 +30,7 @@ def create_rating(
     rate: Rate = Depends(Rate.as_form),
 ) -> RedirectResponse:
     try:
-        rating_db = check_rating_db(rate.author_id, rate.recipient_id, session)
+        rating_db = check_rating_db(rate.author_id, rate.recipient_id, rate.rate_type, session)
         if rating_db:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT, detail='Rate already exists'
