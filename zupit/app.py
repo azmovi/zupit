@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import get_session
-from .router import cars, drivers, offer, profile, rate, travels, users
+from .router import cars, chats, drivers, offer, profile, rate, travels, users
 from .utils import get_current_driver, get_current_user
 
 app = FastAPI()
@@ -25,6 +25,7 @@ app.include_router(offer.router)
 app.include_router(travels.router)
 app.include_router(rate.router)
 app.include_router(profile.router)
+app.include_router(chats.router)
 
 Session = Annotated[Session, Depends(get_session)]
 
@@ -125,3 +126,20 @@ def car(
     return RedirectResponse(
         url='/create-driver', status_code=HTTPStatus.SEE_OTHER
     )
+
+
+@app.get('/chats', response_class=HTMLResponse)
+def my_chats(
+    request: Request,
+    session: Session,  # type: ignore
+):
+    user = get_current_user(request, session)
+    if user:
+        chat_list = chats.get_chats(session, user.id)
+        chat_list = chat_list.chats if chat_list else []
+        return templates.TemplateResponse(
+            request=request,
+            name='chats.html',
+            context={'user': user, 'chats': chat_list},
+        )
+    return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)

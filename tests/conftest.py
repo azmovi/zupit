@@ -89,7 +89,6 @@ def user2(client) -> Public:
     }
 
     response = client.post('/users', data=user)
-    print(response.context.items())
     return response.context['user']
 
 

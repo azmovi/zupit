@@ -1000,4 +1000,69 @@ $$;
 CREATE TRIGGER trigger_update_rating
 AFTER INSERT ON Rate
 FOR EACH ROW
+<<<<<<< Updated upstream
 EXECUTE FUNCTION update_rating();
+=======
+EXECUTE FUNCTION update_driver_rating();
+
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+
+-----------------------------------------------------------------
+---------------------------CHAT----------------------------------
+-----------------------------------------------------------------
+
+CREATE TABLE chats(
+    id SERIAL PRIMARY KEY NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    first INTEGER NOT NULL,
+    second INTEGER NOT NULL,
+    FOREIGN KEY (first) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (second) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE messages(
+    id SERIAL PRIMARY KEY NOT NULL,
+    chat_id INTEGER NOT NULL,
+    sender_id INTEGER NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE FUNCTION create_chat(
+    p_first INTEGER,
+    p_second INTEGER
+)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO chats(first, second)
+    VALUES (p_first, p_second);
+END;
+$$;
+
+CREATE FUNCTION get_chats(
+    p_user_id INTEGER
+)
+RETURNS TABLE(
+    id INTEGER,
+    first VARCHAR,
+    second VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT c.id, uf.name, us.name
+    FROM chats AS c
+    LEFT JOIN users AS uf ON c.first = uf.id
+    LEFT JOIN users AS us ON c.second = us.id
+    WHERE c.first = p_user_id OR c.second = p_user_id;
+END;
+$$;
