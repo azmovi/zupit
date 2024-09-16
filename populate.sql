@@ -6,7 +6,6 @@ SELECT create_brazilian(
     '123',
     '1990-05-15',
     'MAN',
-    '5.0',
     '12345678901'
 );
 
@@ -16,7 +15,6 @@ SELECT create_foreigner(
     'senha456',
     '1985-09-10',
     'WOMAN',
-    '4.6',
     'A1234567'
 );
 

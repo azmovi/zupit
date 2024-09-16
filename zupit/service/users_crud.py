@@ -91,6 +91,7 @@ def confirm_user_db(user: UserCredentials, session: Session) -> int:
         ).fetchone()
         session.commit()
     except Exception:
+        session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
