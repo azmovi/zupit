@@ -13,6 +13,7 @@ CREATE TYPE user_public AS (
     birthday DATE,
     sex gender,
     icon BYTEA,
+    passenger_rating FLOAT,
     doc VARCHAR
 );
 
@@ -24,6 +25,7 @@ CREATE TABLE users (
     birthday DATE NOT NULL,
     sex gender NOT NULL,
     icon BYTEA,
+    passenger_rating FLOAT NOT NULL,
     user_status BOOLEAN NOT NULL
 );
 
@@ -44,15 +46,16 @@ CREATE FUNCTION create_user(
     p_email VARCHAR,
     p_password VARCHAR,
     p_birthday DATE,
-    p_sex gender
+    p_sex gender,
+    p_passenger_rating FLOAT
 ) RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
     v_user_id INTEGER;
 BEGIN
-    INSERT INTO users (name, email, password, birthday, sex, icon, user_status)
-    VALUES (p_name, p_email, p_password, p_birthday, p_sex, NULL, TRUE)
+    INSERT INTO users (name, email, password, birthday, sex, icon, passenger_rating, user_status)
+    VALUES (p_name, p_email, p_password, p_birthday, p_sex, NULL, p_passenger_rating, TRUE)
     RETURNING id INTO v_user_id;
 
     RETURN v_user_id;
@@ -77,6 +80,7 @@ CREATE FUNCTION create_brazilian(
     p_password VARCHAR,
     p_birthday DATE,
     p_sex gender,
+    p_passenger_rating FLOAT,
     p_cpf VARCHAR
 ) RETURNS SETOF user_public
 LANGUAGE plpgsql
@@ -84,11 +88,11 @@ AS $$
 DECLARE 
     v_user_id INTEGER;
 BEGIN
-    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
+    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex, p_passenger_rating);
     PERFORM _create_brazilian(p_cpf, v_user_id);
 
     RETURN QUERY 
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_cpf;
+    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_passenger_rating, p_cpf;
 END;
 $$;
 
@@ -110,6 +114,7 @@ CREATE FUNCTION create_foreigner(
     p_password VARCHAR,
     p_birthday DATE,
     p_sex gender,
+    p_passenger_rating FLOAT,
     p_rnm VARCHAR
 ) RETURNS SETOF user_public
 LANGUAGE plpgsql
@@ -117,11 +122,11 @@ AS $$
 DECLARE 
     v_user_id INTEGER;
 BEGIN
-    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex);
+    v_user_id := create_user(p_name, p_email, p_password, p_birthday, p_sex, p_passenger_rating);
     PERFORM _create_foreigner(p_rnm, v_user_id);
 
     RETURN QUERY
-    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_rnm;
+    SELECT v_user_id, p_name, p_email, p_birthday, p_sex, NULL::BYTEA, p_passenger_rating, p_rnm;
 END;
 $$;
 
@@ -160,6 +165,7 @@ BEGIN
            u.birthday,
            u.sex,
            u.icon,
+           u.passenger_rating,
            get_user_doc(u.id)
     FROM users u
     WHERE u.id = p_id
@@ -179,6 +185,7 @@ BEGIN
            u.birthday,
            u.sex,
            u.icon,
+           u.passenger_rating,
            get_user_doc(u.id)
     FROM users u
     WHERE u.email = p_email
@@ -200,6 +207,7 @@ BEGIN
            u.birthday,
            u.sex,
            u.icon,
+           u.passenger_rating,
            get_user_doc(u.id)
     FROM users u
     WHERE u.email = p_email
@@ -847,7 +855,7 @@ CREATE TABLE Rate (
 );
 
 --função para criar uma avaliacao nova
-CREATE FUNCTION create_rating(
+CREATE FUNCTION create_driver_rating(
     p_author_id INTEGER,
     p_recipient_id INTEGER,
     p_rate_type rating_type,
@@ -898,7 +906,8 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION check_rating_exists(
     p_author_id INTEGER,
-    p_recipient_id INTEGER
+    p_recipient_id INTEGER,
+    p_rate_type rating_type
 )
 RETURNS TABLE (
     id INTEGER,
@@ -921,9 +930,11 @@ BEGIN
         r.creation
     FROM Rate r
     WHERE r.author_id = p_author_id
-    AND r.recipient_id = p_recipient_id;
+    AND r.recipient_id = p_recipient_id
+    AND r.rate_type = p_rate_type;
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 
