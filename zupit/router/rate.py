@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from zupit.database import get_session
 from zupit.schemas.rate import Rate, RateList, RatePublic
 from zupit.service.rate_crud import (
-    check_rating_db,
     create_rating_db,
     get_rates_by_user,
     get_rating_db,
