@@ -79,6 +79,7 @@
                     <th>Placa do Carro</th>
                     <th>Avaliação</th>
                     <th>Avaliar Motorista</th> <!-- Coluna para o botão -->
+                    <th>Chat</th> <!-- Coluna para o botão -->
                 </tr>
             </thead>
             <tbody id="travel-table-body">
@@ -94,6 +95,8 @@
                     <th>Nome</th>
                     <th>Avaliação</th>
                     <th>Avaliar Passageiro</th> <!-- Coluna para o botão -->
+                    <th>Chat</th> <!-- Coluna para o botão -->
+
                 </tr>
             </thead>
             <tbody id="travel-passengers-table-body">
@@ -108,12 +111,12 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Captura o pathname da URL, que no caso será algo como "/trip-participants/1"
             const urlPath = window.location.pathname;
-    
+            const userAtual_id = document.body.getAttribute('user_id');
             // Divida o caminho da URL e pegue o último item, que é o travel_id
             const travel_id = urlPath.split('/').pop();  // Pega o último segmento da URL (1 neste caso)
             // Passa o travel_id para a função get_driver
-            get_driver_info(travel_id);
-            get_passenger_info(travel_id);
+            get_driver_info(travel_id, userAtual_id);
+            get_passenger_info(travel_id, userAtual_id);
         });
     
     </script>    

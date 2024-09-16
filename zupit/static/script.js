@@ -98,7 +98,7 @@ function get_travels(user_id) {
         .catch(error => console.error('Erro ao carregar viagens:', error));
 }
 
-function get_passenger_info(travel_id) {
+function get_passenger_info(travel_id, userAtual_id) {
     fetch(`/travels/search/${travel_id}/`)
         .then(response => {
             if (!response.ok) {
@@ -132,7 +132,8 @@ function get_passenger_info(travel_id) {
                                         <td>${userName}</td>
                                         <td>${passengerRating}</td>
                                         <td><a href="/rate/rate-passenger/${user_id}" class="button-details">Avaliar</a></td>
-                                    `;
+                                        <td><a href="/chats/${userAtual_id}/${user_id}" class="chat-message">Enviar Mensagem</a></td>
+                                        `;
                                     tableBody.appendChild(row);
                                 } else {
                                     throw new Error('Nome do usuário não encontrado.');
@@ -148,7 +149,7 @@ function get_passenger_info(travel_id) {
         .catch(error => console.error('Erro ao carregar viagem:', error));
 }
 
-function get_driver_info(travel_id) {
+function get_driver_info(travel_id,  userAtual_id) {
     fetch(`/travels/search/${travel_id}/`)
         .then(response => {
             if (!response.ok) {
@@ -207,6 +208,7 @@ function get_driver_info(travel_id) {
                                         <td>${carData.plate}</td>
                                         <td>${driverRating}</td>
                                         <td><a href="/rate/rate-driver/${user_id}" class="button-details">Avaliar</a></td>
+                                        <td><a href="/chats/${userAtual_id}/${user_id}" class="chat-message">Enviar Mensagem</a></td>
                                     `;
                                     const tableBody = document.getElementById('travel-table-body');
                                     tableBody.innerHTML = ''; // Limpar a tabela antes de popular
