@@ -865,8 +865,10 @@ CREATE TABLE Rate (
     grade rating_grade NOT NULL,
     content VARCHAR(255),
     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT unique_author_recipient_rate_type UNIQUE (author_id, recipient_id, rate_type)  -- Restrições de unicidade
 );
+
 
 --função para criar uma avaliacao nova
 CREATE FUNCTION create_rating(
@@ -918,40 +920,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION check_rating_exists(
-    p_author_id INTEGER,
-    p_recipient_id INTEGER,
-    p_rate_type rating_type
-)
-RETURNS TABLE (
-    id INTEGER,
-    author_id INTEGER,
-    recipient_id INTEGER,
-    rate_type rating_type,
-    grade rating_grade,
-    content VARCHAR,
-    creation TIMESTAMP
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        r.id, 
-        r.author_id, 
-        r.recipient_id, 
-        r.rate_type, 
-        r.grade, 
-        r.content, 
-        r.creation
-    FROM Rate r
-    WHERE r.author_id = p_author_id
-    AND r.recipient_id = p_recipient_id
-    AND r.rate_type = p_rate_type;
-END;
-$$ LANGUAGE plpgsql;
-
-
-
-
 CREATE OR REPLACE FUNCTION get_rates_by_user(p_user_id INTEGER)
 RETURNS TABLE (
     id INTEGER,
@@ -980,33 +948,56 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION update_driver_rating()
+CREATE OR REPLACE FUNCTION update_rating()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Atualiza a nota média do motorista (recipient_id)
-    UPDATE drivers
-    SET rating = (
-        SELECT AVG(
-            CASE 
-                WHEN grade = 'OTIMO' THEN 5
-                WHEN grade = 'BOM' THEN 4
-                WHEN grade = 'MEDIANO' THEN 3
-                WHEN grade = 'RUIM' THEN 2
-                WHEN grade = 'PESSIMO' THEN 1
-            END
+    -- Se o rating_type for 'CARONISTA', atualiza a nota média do motorista (tabela drivers)
+    IF NEW.rate_type = 'CARONISTA' THEN
+        UPDATE drivers
+        SET rating = (
+            SELECT AVG(
+                CASE 
+                    WHEN grade = 'OTIMO' THEN 5
+                    WHEN grade = 'BOM' THEN 4
+                    WHEN grade = 'MEDIANO' THEN 3
+                    WHEN grade = 'RUIM' THEN 2
+                    WHEN grade = 'PESSIMO' THEN 1
+                END
+            )
+            FROM Rate
+            WHERE recipient_id = NEW.recipient_id
+            AND rate_type = 'CARONISTA'
         )
-        FROM Rate
-        WHERE recipient_id = NEW.recipient_id
-    )
-    WHERE user_id = NEW.recipient_id;
+        WHERE user_id = NEW.recipient_id;
+
+    -- Se o rating_type for 'CARONEIRO', atualiza a nota média do passageiro (tabela users)
+    ELSIF NEW.rate_type = 'CARONEIRO' THEN
+        UPDATE users
+        SET passenger_rating = (
+            SELECT AVG(
+                CASE 
+                    WHEN grade = 'OTIMO' THEN 5
+                    WHEN grade = 'BOM' THEN 4
+                    WHEN grade = 'MEDIANO' THEN 3
+                    WHEN grade = 'RUIM' THEN 2
+                    WHEN grade = 'PESSIMO' THEN 1
+                END
+            )
+            FROM Rate
+            WHERE recipient_id = NEW.recipient_id
+            AND rate_type = 'CARONEIRO'
+        )
+        WHERE id = NEW.recipient_id;
+    END IF;
 
     RETURN NEW;
 END;
 $$;
 
-CREATE TRIGGER trigger_update_driver_rating
+
+CREATE TRIGGER trigger_update_rating
 AFTER INSERT ON Rate
 FOR EACH ROW
-EXECUTE FUNCTION update_driver_rating();
+EXECUTE FUNCTION update_rating();
