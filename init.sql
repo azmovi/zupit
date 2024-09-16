@@ -1000,24 +1000,7 @@ $$;
 CREATE TRIGGER trigger_update_rating
 AFTER INSERT ON Rate
 FOR EACH ROW
-<<<<<<< Updated upstream
 EXECUTE FUNCTION update_rating();
-=======
-EXECUTE FUNCTION update_driver_rating();
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 -----------------------------------------------------------------
 ---------------------------CHAT----------------------------------
