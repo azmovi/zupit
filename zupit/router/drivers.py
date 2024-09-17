@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
@@ -43,4 +43,7 @@ def get_driver(user_id: int, session: Session = Depends(get_session)):
     db_user = get_driver_db(user_id, session)
     if db_user:
         return db_user
-    return None
+    return JSONResponse(
+        status_code=404,
+        content={"message": "Nenhum motorista encontrado."}
+    )
