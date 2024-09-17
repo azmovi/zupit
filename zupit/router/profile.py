@@ -12,13 +12,13 @@ from zupit.utils import get_current_user
 templates = Jinja2Templates(directory='zupit/templates')
 router = APIRouter(prefix='/profile', tags=['profile'])
 
-Session = Annotated[Session, Depends(get_session)]
-
 
 @router.get('/', response_class=HTMLResponse)
 def index(
     request: Request,
-    session: Session,  # type: ignore
+    session: Session = Depends(
+        get_session
+    ),   # type: ignore
 ):
     user = get_current_user(request, session)
     if user:
@@ -28,6 +28,31 @@ def index(
             context={'user': user},
         )
     return RedirectResponse(url='/sign-up', status_code=HTTPStatus.SEE_OTHER)
+
+@router.get('/view/{user_id}', response_class=HTMLResponse)
+def index(
+    request: Request,
+    user_id: int,
+    session: Session = Depends(
+        get_session
+    ),   # type: ignore
+):
+    user = get_current_user(
+        request, session
+    )  # Assuming this is a helper function in your code
+    error = request.session.get('error', None)
+    if user:
+        return templates.TemplateResponse(
+            name='profile/view.html',  # Path to the template
+            context={
+                'request': request,
+                'user': user,
+                'user_id': user_id,
+                'error': error,
+            },
+        )
+    return RedirectResponse(url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER)
+
 
 
 # @router.get('/{step}', response_class=HTMLResponse)

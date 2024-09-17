@@ -135,3 +135,29 @@ def rate_passenger(
     return RedirectResponse(
         url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
     )
+
+@router.get('/view-ratings/{user_id}', response_class=HTMLResponse)
+def view_ratings(
+    request: Request,
+    user_id: int,
+    session: Session = Depends(
+        get_session
+    ),  # Use Depends to inject the session
+):
+    user = get_current_user(
+        request, session
+    )  # Assuming this is a helper function in your code
+    error = request.session.get('error', None)
+    if user:
+        return templates.TemplateResponse(
+            name='rate/view-ratings.html',  # Path to the template
+            context={
+                'request': request,
+                'user': user,
+                'user_id': user_id,
+                'error': error,
+            },
+        )
+    return RedirectResponse(
+        url='/profile', status_code=HTTPStatus.SEE_OTHER
+    )

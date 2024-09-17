@@ -135,3 +135,19 @@ SELECT create_or_update_rating(
     'Achei bem dos bons'
 );
 
+SELECT create_or_update_rating(
+    2,
+    1,
+    'CARONEIRO',
+    'OTIMO',
+    NULL
+);
+
+SELECT create_or_update_rating(
+    3,
+    1,
+    'CARONISTA',
+    'MEDIANO',
+    'Achei médio'
+);
+

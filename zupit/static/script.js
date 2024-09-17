@@ -108,6 +108,43 @@ function get_travels(user_id) {
         .catch(error => console.error('Erro ao carregar viagens:', error));
 }
 
+function get_ratings(user_id) {
+    fetch(`/rate/${user_id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar a lista de avaliações');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dados recebidos:', data);  // Verifique se os dados estão corretos no console
+            const tableBody = document.getElementById('ratings-table-body');
+            tableBody.innerHTML = '';
+            
+            if (data && data.rates && data.rates.length > 0) {
+                data.rates.forEach(rate => {
+                    console.log("Dados da avaliação atual:", rate);
+                    const row = document.createElement('tr');
+                    if(rate.content == null)
+                        rateContent = '';
+                    else
+                        rateContent = rate.content;
+
+                    row.innerHTML = `
+                        <td>${rate.rate_type}</td>
+                        <td>${rateContent}</td>
+                        <td>${rate.grade}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                console.log("Nenhuma avaliação encontrada.");
+                tableBody.innerHTML = '<tr><td colspan="3">Nenhuma avaliação encontrada.</td></tr>';
+            }
+        })
+        .catch(error => console.error('Erro ao carregar avaliações:', error));
+}
+
 function get_passenger_info(travel_id, userAtual_id) {
     fetch(`/travels/search/${travel_id}/`)
         .then(response => {
@@ -145,7 +182,7 @@ function get_passenger_info(travel_id, userAtual_id) {
                                     // Cria a linha da tabela
                                     const row = document.createElement('tr');
                                     row.innerHTML = `
-                                        <td>${userName}</td>
+                                        <td><a href="/profile/view/${user_id}" class="view-profile">${userName}</a></td>
                                         <td>${passengerRating}</td>
                                         <td>
                                             <a href="/rate/rate-passenger/${user_id}" class="button-details">Avaliar</a>
@@ -158,12 +195,16 @@ function get_passenger_info(travel_id, userAtual_id) {
                                     if (user_id === parseInt(userAtual_id)) {
                                         const rateButton = row.querySelector('.button-details');
                                         const chatButton = row.querySelector('.chat-message');
+                                        const viewProfileButton = row.querySelector('.view-profile');
                                         
                                         rateButton.classList.add('disabled');
                                         rateButton.style.pointerEvents = 'none';
                                         
                                         chatButton.classList.add('disabled');
                                         chatButton.style.pointerEvents = 'none';
+
+                                        viewProfileButton.classList.add('normal');
+                                        viewProfileButton.style.pointerEvents = 'none';
                                     }
                                     // Se a viagem não ocorreu, desativar o botão de avaliação
                                     if (!isPastTravel) {
@@ -247,7 +288,7 @@ function get_driver_info(travel_id, userAtual_id) {
                                     // Monta a linha da tabela com todas as informações
                                     const row = document.createElement('tr');
                                     row.innerHTML = `
-                                        <td>${userName}</td>
+                                        <td><a href="/profile/view/${user_id}" class="view-profile">${userName}</a></td>
                                         <td>${carData.brand} ${carData.model} (${carData.color})</td>
                                         <td>${carData.plate}</td>
                                         <td>${driverRating}</td>
@@ -269,12 +310,16 @@ function get_driver_info(travel_id, userAtual_id) {
                                     if (user_id === parseInt(userAtual_id)) {
                                         const rateButton = row.querySelector('.button-details');
                                         const chatButton = row.querySelector('.chat-message');
+                                        const viewProfileButton = row.querySelector('.view-profile');
                                         
                                         rateButton.classList.add('disabled');
                                         rateButton.style.pointerEvents = 'none';
                                         
                                         chatButton.classList.add('disabled');
                                         chatButton.style.pointerEvents = 'none';
+
+                                        viewProfileButton.classList.add('normal');
+                                        viewProfileButton.style.pointerEvents = 'none';
                                     }
                                     // Se a viagem não ocorreu, desativar o botão de avaliação
                                     if (!isPastTravel) {

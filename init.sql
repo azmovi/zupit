@@ -960,7 +960,8 @@ BEGIN
         r.content, 
         r.creation
     FROM Rate r
-    WHERE r.recipient_id = p_user_id;
+    WHERE r.recipient_id = p_user_id
+    ORDER BY r.rate_type;
 END;
 $$;
 
