@@ -871,7 +871,7 @@ CREATE TABLE Rate (
 
 
 --função para criar uma avaliacao nova
-CREATE FUNCTION create_rating(
+CREATE FUNCTION create_or_update_rating(
     p_author_id INTEGER,
     p_recipient_id INTEGER,
     p_rate_type rating_type,
@@ -883,15 +883,32 @@ AS $$
 DECLARE
     v_rating_id INTEGER;
 BEGIN
-    -- Insere a nova avaliação na tabela Avalia
-    INSERT INTO Rate (author_id, recipient_id, creation, rate_type, grade, content)
-    VALUES (p_author_id, p_recipient_id, NOW(), p_rate_type, p_grade, p_content)
-    RETURNING id INTO v_rating_id;
+    -- Verifica se já existe uma avaliação com os parâmetros fornecidos
+    SELECT id INTO v_rating_id
+    FROM Rate
+    WHERE author_id = p_author_id
+    AND recipient_id = p_recipient_id
+    AND rate_type = p_rate_type;
 
-    -- Retorna o ID da avaliação recém-criada
+    -- Se a avaliação já existir, atualiza a existente
+    IF v_rating_id IS NOT NULL THEN
+        UPDATE Rate
+        SET grade = p_grade,
+            content = p_content,
+            creation = NOW()
+        WHERE id = v_rating_id;
+    ELSE
+        -- Se não existir, insere uma nova avaliação
+        INSERT INTO Rate (author_id, recipient_id, creation, rate_type, grade, content)
+        VALUES (p_author_id, p_recipient_id, NOW(), p_rate_type, p_grade, p_content)
+        RETURNING id INTO v_rating_id;
+    END IF;
+
+    -- Retorna o ID da avaliação, seja nova ou atualizada
     RETURN v_rating_id;
 END;
 $$;
+
 
 CREATE OR REPLACE FUNCTION get_rating_by_id(
     p_id INTEGER
@@ -947,6 +964,36 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION check_rating_exists(
+    p_author_id INTEGER,
+    p_recipient_id INTEGER,
+    p_rate_type rating_type
+)
+RETURNS TABLE (
+    id INTEGER,
+    author_id INTEGER,
+    recipient_id INTEGER,
+    rate_type rating_type,
+    grade rating_grade,
+    content VARCHAR,
+    creation TIMESTAMP
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        r.id, 
+        r.author_id, 
+        r.recipient_id, 
+        r.rate_type, 
+        r.grade, 
+        r.content, 
+        r.creation
+    FROM Rate r
+    WHERE r.author_id = p_author_id
+      AND r.recipient_id = p_recipient_id
+      AND r.rate_type = p_rate_type;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_rating()
 RETURNS TRIGGER
@@ -996,28 +1043,10 @@ BEGIN
 END;
 $$;
 
-
 CREATE TRIGGER trigger_update_rating
-AFTER INSERT ON Rate
+AFTER INSERT OR UPDATE ON Rate
 FOR EACH ROW
-<<<<<<< Updated upstream
 EXECUTE FUNCTION update_rating();
-=======
-EXECUTE FUNCTION update_driver_rating();
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 -----------------------------------------------------------------
 ---------------------------CHAT----------------------------------

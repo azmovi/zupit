@@ -31,7 +31,7 @@
 <body user_id="{{ user.id }}">
     <section class="container">
         {% include 'navbar.html' %}
-        <h1>Avalie o Passageiro</h1>
+        <h1 id="page-title">Avalie o Passageiro</h1>
         <form method="POST" action="/rate">
             <!-- Nota (grade) -->
             <div class="justify-start">
@@ -68,12 +68,33 @@
 
     <script>
        
-        document.addEventListener('DOMContentLoaded', function() {
+       document.addEventListener('DOMContentLoaded', function() {
             const url = window.location.pathname;
             const recipientId = url.split('/').pop();  
+            const userAtualId = document.body.getAttribute('user_id');
 
             document.getElementById('recipient_id').value = recipientId;
+            fetch(`/rate/edit/${recipientId}/${userAtualId}/CARONEIRO`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Avaliação não encontrada');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const grade = data.grade;
+                    const gradeInput = document.querySelector(`input[name="grade"][value="${grade}"]`);
+                    if (gradeInput) {
+                        gradeInput.checked = true;
+                    }
+                    document.getElementById('content').value = data.content;
+                    document.getElementById('page-title').textContent = "Editar Avaliação do Passageiro";
+                })
+                .catch(error => {
+                    console.log('Erro ao carregar a avaliação existente:', error);
+                });
         });
+
     </script>
 </body>
 </html>
