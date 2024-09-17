@@ -135,6 +135,7 @@ def rate_passenger(
         url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
     )
 
+
 @router.get('/view-ratings/{user_id}', response_class=HTMLResponse)
 def view_ratings(
     request: Request,
@@ -157,6 +158,4 @@ def view_ratings(
                 'error': error,
             },
         )
-    return RedirectResponse(
-        url='/profile', status_code=HTTPStatus.SEE_OTHER
-    )
+    return RedirectResponse(url='/profile', status_code=HTTPStatus.SEE_OTHER)

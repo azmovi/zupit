@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -16,9 +15,7 @@ router = APIRouter(prefix='/profile', tags=['profile'])
 @router.get('/', response_class=HTMLResponse)
 def index(
     request: Request,
-    session: Session = Depends(
-        get_session
-    ),   # type: ignore
+    session: Session = Depends(get_session),  # type: ignore
 ):
     user = get_current_user(request, session)
     if user:
@@ -29,13 +26,12 @@ def index(
         )
     return RedirectResponse(url='/sign-up', status_code=HTTPStatus.SEE_OTHER)
 
+
 @router.get('/view/{user_id}', response_class=HTMLResponse)
-def index(
+def view_by_user(
     request: Request,
     user_id: int,
-    session: Session = Depends(
-        get_session
-    ),   # type: ignore
+    session: Session = Depends(get_session),  # type: ignore
 ):
     user = get_current_user(
         request, session
@@ -51,8 +47,9 @@ def index(
                 'error': error,
             },
         )
-    return RedirectResponse(url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER)
-
+    return RedirectResponse(
+        url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
+    )
 
 
 # @router.get('/{step}', response_class=HTMLResponse)
