@@ -147,10 +147,9 @@ def my_chats(
     user = get_current_user(request, session)
     if user:
         chat_list = chats.get_chats(session, user.id)
-        chat_list = chat_list.chats if chat_list else []
         return templates.TemplateResponse(
             request=request,
             name='chats.html',
-            context={'user': user, 'chats': chat_list},
+            context={'user': user, 'chats': chat_list.chats},
         )
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)

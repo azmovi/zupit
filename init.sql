@@ -1066,7 +1066,7 @@ CREATE TABLE messages(
     chat_id INTEGER NOT NULL,
     sender_id INTEGER NOT NULL,
     content VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -1085,6 +1085,7 @@ BEGIN
 END;
 $$;
 
+
 CREATE FUNCTION get_chats(
     p_user_id INTEGER
 )
@@ -1097,13 +1098,22 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT c.id, uf.name, us.name
+    SELECT c.id,
+           CASE 
+               WHEN c.first = p_user_id THEN uf.name
+               ELSE us.name
+           END AS first,
+           CASE 
+               WHEN c.first = p_user_id THEN us.name
+               ELSE uf.name
+           END AS second
     FROM chats AS c
     LEFT JOIN users AS uf ON c.first = uf.id
     LEFT JOIN users AS us ON c.second = us.id
     WHERE c.first = p_user_id OR c.second = p_user_id;
 END;
 $$;
+
 
 CREATE FUNCTION get_chat(
     p_first INTEGER,
@@ -1130,16 +1140,59 @@ CREATE FUNCTION get_messages(
 )
 RETURNS TABLE(
     sender VARCHAR,
-    content VARCHAR
+    content VARCHAR,
+    created_at TIMESTAMP
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT u.name, m.content
+    SELECT u.name, m.content, m.created_at
     FROM messages m 
     LEFT JOIN users u ON m.sender_id = u.id 
     WHERE m.chat_id = p_chat_id;
 END;
 $$;
 
+CREATE FUNCTION get_users_from_chat(
+    p_chat_id INTEGER,
+    p_user_id INTEGER
+)
+RETURNS TABLE(
+    first_name VARCHAR,
+    second_name VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        CASE 
+            WHEN c.first = p_user_id THEN uf.name
+            ELSE us.name
+        END AS first_name,
+        CASE 
+            WHEN c.first = p_user_id THEN us.name
+            ELSE uf.name
+        END AS second_name
+    FROM chats c
+    LEFT JOIN users uf ON c.first = uf.id 
+    LEFT JOIN users us ON c.second = us.id 
+    WHERE c.id = p_chat_id;
+END;
+$$;
+
+
+CREATE FUNCTION save_message(
+    p_chat_id INTEGER,
+    p_sender_id INTEGER,
+    p_content VARCHAR
+)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO messages (chat_id, sender_id, content)
+    VALUES(p_chat_id, p_sender_id, p_content);
+END;
+$$;

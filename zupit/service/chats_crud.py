@@ -74,11 +74,30 @@ def get_messages_db(
     sql = text('SELECT * FROM get_messages(:chat_id)')
     messages = session.execute(sql, {'chat_id': chat_id}).fetchall()
     for message in messages:
-        print(message)
         message_example = Message(
             sender=message[0],
             message=message[1],
+            created_at=message[2],
         )
         message_list.append(message_example)
 
     return MessageList(messages=message_list)
+
+
+def get_users_from_chat_db(
+    session: Session,  # type: ignore
+    chat_id: int,
+    user_id: int,
+) -> Chat:
+    sql = text('SELECT * FROM get_users_from_chat(:chat_id, :user_id)')
+    try:
+        result = session.execute(
+            sql, {'chat_id': chat_id, 'user_id': user_id}
+        ).fetchone()
+        session.commit()
+        return Chat(id=chat_id, first=result[0], second=result[1])
+    except Exception:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Invalid Input'
+        )

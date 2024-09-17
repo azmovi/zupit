@@ -43,9 +43,7 @@ def get_chats(
     session: Session,  # type: ignore
     user_id: int,
 ):
-    if chat_list := get_chats_db(session, user_id):
-        return chat_list
-    return None
+    return get_chats_db(session, user_id)
 
 
 @router.get('/{first}/{second}', response_class=HTMLResponse)

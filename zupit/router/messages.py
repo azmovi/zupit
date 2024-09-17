@@ -1,17 +1,14 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.service.chats_crud import (
-    create_chat_db,
-    get_chat_db,
-    get_messages_db,
-)
+from zupit.manager import manager
+from zupit.service.chats_crud import get_messages_db, get_users_from_chat_db
 from zupit.utils import get_current_user
 
 router = APIRouter(prefix='/messages', tags=['messages'])
@@ -26,34 +23,26 @@ def get_messages(
     chat_id: int,
 ):
     if user := get_current_user(request, session):
+        chat = get_users_from_chat_db(session, chat_id, user.id)
         messages = get_messages_db(session, chat_id)
         return templates.TemplateResponse(
             request=request,
             name='messages.html',
-            context={'user': user, 'messages': messages.messages},
+            context={
+                'user': user,
+                'chat': chat,
+                'messages': messages.messages,
+            },
         )
     return RedirectResponse(url='/sign-in', status_code=HTTPStatus.SEE_OTHER)
 
 
-@router.post(
-    '/',
-    response_class=HTMLResponse,
-    status_code=HTTPStatus.CREATED,
-)
-def create_chat(
-    request: Request,
-    session: Session,  # type: ignore
-    first: int,
-    second: int,
-):
+@router.websocket('/ws/{chat_id}/')
+async def websocket_endpoint(websocket: WebSocket, chat_id: int):
+    await manager.connect(websocket, chat_id)
     try:
-        if not get_chat_db(session, first, second):
-            create_chat_db(session, first, second)
-
-        return RedirectResponse(url='/chats', status_code=HTTPStatus.SEE_OTHER)
-
-    except HTTPException as exc:
-        request.session['error'] = exc.detail
-        return RedirectResponse(
-            url='/search-travel', status_code=HTTPStatus.SEE_OTHER
-        )
+        while True:
+            data = await websocket.receive_text()
+            await manager.broadcast(data, chat_id)
+    except WebSocketDisconnect:
+        await manager.disconnect(websocket, chat_id)

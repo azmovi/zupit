@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -14,6 +16,7 @@ class ChatList(BaseModel):
 class Message(BaseModel):
     sender: str
     message: str
+    created_at: datetime
 
 
 class MessageList(BaseModel):

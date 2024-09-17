@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat</title>
-    <link href="{{ url_for('static', path='style.css') }}" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -37,8 +36,11 @@
         }
 
         .message {
-            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
             border-bottom: 1px solid #ddd;
+            position: relative;
         }
 
         .message:last-child {
@@ -51,8 +53,16 @@
         }
 
         .message .content {
-            margin-top: 5px;
+            margin: 0; /* Remove a margem extra */
             color: #333;
+        }
+
+        .message .timestamp {
+            color: #888; /* Cor mais fraquinha */
+            font-size: 0.8em;
+            position: absolute;
+            right: 10px; /* Alinha à direita */
+            bottom: 8px; /* Ajusta a posição vertical */
         }
 
         .input-container {
@@ -60,11 +70,12 @@
             margin-top: 20px;
         }
 
-        .input-container input {
+        .input-container textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            resize: none;
         }
 
         .input-container button {
@@ -86,13 +97,13 @@
     {% include 'navbar.html' %}
 
     <div class="chat-container">
-        <h1>Chat</h1>
-        <ul class="messages">
+        <h1>{{ chat.first }} está conversando com {{ chat.second }}</h1>
+        <ul class="messages" id="messages">
             {% if messages | length > 0 %}
                 {% for message in messages %}
                     <li class="message">
-                        <span class="sender">{{ message.sender }}:</span>
-                        <p class="content">{{ message.content }}</p>
+                        <p class="content">{{ message.message }}</p>
+                        <p class="timestamp">{{ message.created_at }}</p>
                     </li>
                 {% endfor %}
             {% else %}
@@ -101,25 +112,34 @@
         </ul>
 
         <div class="input-container">
-            <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
-            <button onclick="sendMessage()">Enviar</button>
+            <textarea id="message" rows="4"></textarea>
+            <button id="send">Enviar</button>
         </div>
     </div>
 
     <script>
-        function sendMessage() {
-            let messageInput = document.getElementById("messageInput");
-            let message = messageInput.value;
+        const ws = new WebSocket(`ws://${window.location.host}/messages/ws/{{ chat.id }}/`);
+        ws.onmessage = function(event) {
+            const messages = document.getElementById('messages');
+            const message = document.createElement('li');
+            message.classList.add('message');
+            message.innerHTML = `<p class="content">${event.data}</p>`;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        };
 
-            if (message.trim() === "") {
+        document.getElementById('send').addEventListener('click', () => {
+            const input = document.getElementById('message');
+            const message = input.value.trim()
+            if (message === '') {
                 return;
             }
+            const user = "{{ chat.first }}";
+            const id = "{{ user.id }}"
+            ws.send(`${id} - ${user}: ${message}`);
+            input.value = '';
+        });
 
-            // Aqui você pode implementar a lógica para enviar a mensagem via WebSocket
-            // Exemplo: socket.send(message);
-
-            messageInput.value = ""; // Limpa o campo de entrada após enviar a mensagem
-        }
     </script>
 </body>
 </html>

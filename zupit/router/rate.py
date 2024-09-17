@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -78,8 +78,7 @@ def get_existing_rating(
     if rating:
         return rating
     return JSONResponse(
-        status_code=404,
-        content={"message": "Nenhuma avaliação encontrada."}
+        status_code=404, content={'message': 'Nenhuma avaliação encontrada.'}
     )
 
 
