@@ -74,6 +74,7 @@ def get_messages_db(
     sql = text('SELECT * FROM get_messages(:chat_id)')
     messages = session.execute(sql, {'chat_id': chat_id}).fetchall()
     for message in messages:
+        print(message)
         message_example = Message(
             sender=message[0],
             message=message[1],

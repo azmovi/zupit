@@ -76,10 +76,9 @@ def search_travels(
 ):
     try:
         travel_list = search_travel_db(session, leaving, going, day)
-        travels = travel_list.travels if travel_list else []
         return templates.TemplateResponse(
             'result-search-travel.html',
-            {'request': request, 'travels': travels},
+            {'request': request, 'travels': travel_list.travels},
         )
     except HTTPException as exc:
         request.session['error'] = exc.detail

@@ -1136,7 +1136,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT u.name, m.message 
+    SELECT u.name, m.content
     FROM messages m 
     LEFT JOIN users u ON m.sender_id = u.id 
     WHERE m.chat_id = p_chat_id;

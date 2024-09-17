@@ -171,7 +171,7 @@ def search_travel_db(
     leaving: str,
     going: str,
     day: date,
-) -> Optional[TravelList]:
+) -> TravelList:
     sql = text('SELECT * FROM search_travel(:leaving, :going, :day)')
     try:
         travels = session.execute(
