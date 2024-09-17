@@ -1019,7 +1019,7 @@ CREATE TABLE messages(
     id SERIAL PRIMARY KEY NOT NULL,
     chat_id INTEGER NOT NULL,
     sender_id INTEGER NOT NULL,
-    message VARCHAR(255) NOT NULL,
+    content VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -1058,3 +1058,42 @@ BEGIN
     WHERE c.first = p_user_id OR c.second = p_user_id;
 END;
 $$;
+
+CREATE FUNCTION get_chat(
+    p_first INTEGER,
+    p_second INTEGER
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE 
+    v_id INTEGER;
+BEGIN
+    SELECT id INTO v_id 
+    FROM chats 
+    WHERE (p_first = first OR p_first = second) 
+    AND (p_second = first OR p_second = second);
+    
+    RETURN v_id;
+END;
+$$;
+
+
+CREATE FUNCTION get_messages(
+    p_chat_id INTEGER
+)
+RETURNS TABLE(
+    sender VARCHAR,
+    content VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.name, m.message 
+    FROM messages m 
+    LEFT JOIN users u ON m.sender_id = u.id 
+    WHERE m.chat_id = p_chat_id;
+END;
+$$;
+

@@ -58,6 +58,7 @@ def get_rating_db(id: int, session: Session) -> Optional[Rate]:
         )
     return None
 
+
 def get_rates_by_user(
     session: Session,  # type: ignore
     recipient_id: int,

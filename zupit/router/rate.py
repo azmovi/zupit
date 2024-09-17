@@ -39,7 +39,7 @@ def create_rating(
         request.session['error'] = exc.detail
         return RedirectResponse(
             url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
-        ) 
+        )
 
 
 @router.get('/{recipient_id}', response_model=RateList)

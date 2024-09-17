@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from zupit.database import get_session
-from zupit.schemas.chats import Chat, ChatList
+from zupit.schemas.chats import Chat, ChatList, Message, MessageList
 
 Session = Annotated[Session, Depends(get_session)]
 
@@ -30,7 +30,7 @@ def create_chat_db(
 def get_chats_db(
     session: Session,  # type: ignore
     user_id: int,
-) -> Optional[ChatList]:
+) -> ChatList:
     chat_list = []
     sql = text('SELECT * FROM get_chats(:user_id)')
     chats = session.execute(sql, {'user_id': user_id}).fetchall()
@@ -43,3 +43,41 @@ def get_chats_db(
         chat_list.append(chat_example)
 
     return ChatList(chats=chat_list)
+
+
+def get_chat_db(
+    session: Session,  # type:  ignore
+    first: int,
+    second: int,
+) -> Optional[int]:
+    sql = text('SELECT * FROM get_chat(:first, :second)')
+    try:
+        result = session.execute(
+            sql, {'first': first, 'second': second}
+        ).fetchone()
+        session.commit()
+        if result:
+            return result[0]
+        return None
+    except Exception:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='Invalid Input'
+        )
+
+
+def get_messages_db(
+    session: Session,  # type: ignore
+    chat_id: int,
+) -> MessageList:
+    message_list = []
+    sql = text('SELECT * FROM get_messages(:chat_id)')
+    messages = session.execute(sql, {'chat_id': chat_id}).fetchall()
+    for message in messages:
+        message_example = Message(
+            sender=message[0],
+            message=message[1],
+        )
+        message_list.append(message_example)
+
+    return MessageList(messages=message_list)
