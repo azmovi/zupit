@@ -56,8 +56,10 @@ function get_travels(user_id) {
         .then(data => {
             console.log('Dados recebidos:', data);  // Verifique se os dados estão corretos no console
             const tableBody = document.getElementById('travel-table-body');
-            tableBody.innerHTML = ''; // Limpar a tabela antes de popular
+            tableBody.innerHTML = '';
 
+            const now = new Date();
+            
             if (data && data.travels && data.travels.length > 0) {
                 data.travels.forEach(travel => {
                     console.log("Dados da viagem atual:", travel);
@@ -67,17 +69,25 @@ function get_travels(user_id) {
                     const departureTime = departure.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });  // Ex: "14:00"
                     // Extrair data e hora de arrival
                     const arrival = new Date(travel.arrival);
+
                     // Calcular a duração da viagem
                     const durationMs = arrival.getTime() - departure.getTime();  // Diferença em milissegundos
                     const durationHours = Math.floor(durationMs / (1000 * 60 * 60));  // Converter para horas
                     const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));  // Restante em minutos
                     const duration = `${durationHours}h ${durationMinutes}min`;  // Formatar a duração
+
                     // Definir valores para a tabela
                     const originCity = travel.origin.address.city || "Cidade de origem não encontrada";
                     const destinationCity = travel.destination.address.city || "Cidade de destino não encontrada";
                     const distance = travel.destination.distance || "Distância não encontrada";
 
+                    // Verifica se a viagem já foi realizada
+                    const isPastTravel = arrival < now; // Comparar hora de chegada com o tempo atual
+                    const rowClass = isPastTravel ? 'past-travel' : 'future-travel'; // Define a classe CSS correta
+
                     const row = document.createElement('tr');
+                    row.classList.add(rowClass); // Adiciona a classe com base no status da viagem
+
                     row.innerHTML = `
                         <td>${originCity}</td>
                         <td>${destinationCity}</td>
@@ -111,7 +121,6 @@ function get_passenger_info(travel_id, userAtual_id) {
                 const passengers = data.involved.filter(id => id !== data.user_id);  // Filtra para excluir o motorista
                 const tableBody = document.getElementById('travel-passengers-table-body');
                 tableBody.innerHTML = ''; // Limpa a tabela antes de adicionar passageiros
-                
                 if (passengers.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="3">Nenhum passageiro encontrado.</td></tr>';
                 } else {
@@ -125,15 +134,44 @@ function get_passenger_info(travel_id, userAtual_id) {
                             })
                             .then(userData => {
                                 if (userData && userData.name) {
-                                    const userName = userData.name;  // Extrai o nome do usuário
-                                    const passengerRating = userData.passenger_rating.toFixed(1) || "Sem avaliação";  // Extrai a avaliação ou mostra uma mensagem padrão
+                                    const userName = userData.name; 
+                                    const passengerRating = userData.passenger_rating?.toFixed(1) || "Sem avaliação";  // Extrai a avaliação ou mostra uma mensagem padrão
+                                    
+                                    // Verifica se a viagem já ocorreu (arrival já passou)
+                                    const arrivalDate = new Date(data.arrival);
+                                    const currentDate = new Date();
+                                    const isPastTravel = arrivalDate < currentDate; 
+
+                                    // Cria a linha da tabela
                                     const row = document.createElement('tr');
                                     row.innerHTML = `
                                         <td>${userName}</td>
                                         <td>${passengerRating}</td>
-                                        <td><a href="/rate/rate-passenger/${user_id}" class="button-details">Avaliar</a></td>
-                                        <td><a href="/chats/${userAtual_id}/${user_id}" class="chat-message">Enviar Mensagem</a></td>
-                                        `;
+                                        <td>
+                                            <a href="/rate/rate-passenger/${user_id}" class="button-details">Avaliar</a>
+                                        </td>
+                                        <td>
+                                            <a href="/chats/${userAtual_id}/${user_id}" class="chat-message">Enviar Mensagem</a>
+                                        </td>
+                                    `;
+
+                                    if (user_id === parseInt(userAtual_id)) {
+                                        const rateButton = row.querySelector('.button-details');
+                                        const chatButton = row.querySelector('.chat-message');
+                                        
+                                        rateButton.classList.add('disabled');
+                                        rateButton.style.pointerEvents = 'none';
+                                        
+                                        chatButton.classList.add('disabled');
+                                        chatButton.style.pointerEvents = 'none';
+                                    }
+                                    // Se a viagem não ocorreu, desativar o botão de avaliação
+                                    if (!isPastTravel) {
+                                        const rateButton = row.querySelector('.button-details');
+                                        rateButton.classList.add('disabled');
+                                        rateButton.style.pointerEvents = 'none';  
+                                    }
+
                                     tableBody.appendChild(row);
                                 } else {
                                     throw new Error('Nome do usuário não encontrado.');
@@ -149,7 +187,8 @@ function get_passenger_info(travel_id, userAtual_id) {
         .catch(error => console.error('Erro ao carregar viagem:', error));
 }
 
-function get_driver_info(travel_id,  userAtual_id) {
+
+function get_driver_info(travel_id, userAtual_id) {
     fetch(`/travels/search/${travel_id}/`)
         .then(response => {
             if (!response.ok) {
@@ -171,7 +210,7 @@ function get_driver_info(travel_id,  userAtual_id) {
                     .then(userData => {
                         if (userData && userData.name) {
                             const userName = userData.name;  // Extrai o nome do usuário
-                            return { userName, user_id, renavam }; // Retorna um objeto com userName e renavam
+                            return { userName, user_id, renavam, arrival: data.arrival }; // Retorna um objeto com userName, user_id, renavam e arrival
                         } else {
                             throw new Error('Nome do usuário não encontrado.');
                         }
@@ -180,7 +219,7 @@ function get_driver_info(travel_id,  userAtual_id) {
                 throw new Error('Nenhum user_id encontrado para essa viagem.');
             }
         })
-        .then(({ userName, user_id, renavam }) => {
+        .then(({ userName, user_id, renavam, arrival }) => {
             return fetch(`/drivers/${user_id}/`)
                 .then(response => {
                     if (!response.ok) {
@@ -200,6 +239,11 @@ function get_driver_info(travel_id,  userAtual_id) {
                             })
                             .then(carData => {
                                 if (carData && carData.brand && carData.model && carData.plate && carData.color) {
+                                    // Verifica se a viagem já ocorreu (arrival já passou)
+                                    const arrivalDate = new Date(arrival);
+                                    const currentDate = new Date();
+                                    const isPastTravel = arrivalDate < currentDate;  // Se a viagem já aconteceu
+
                                     // Monta a linha da tabela com todas as informações
                                     const row = document.createElement('tr');
                                     row.innerHTML = `
@@ -207,15 +251,36 @@ function get_driver_info(travel_id,  userAtual_id) {
                                         <td>${carData.brand} ${carData.model} (${carData.color})</td>
                                         <td>${carData.plate}</td>
                                         <td>${driverRating}</td>
-                                        <td><a href="/rate/rate-driver/${user_id}" class="button-details">Avaliar</a></td>
+                                        <td>
+                                            <a href="/rate/rate-driver/${user_id}" class="button-details ${isPastTravel ? '' : 'disabled'}">
+                                                Avaliar
+                                            </a>
+                                        </td>
                                         <td><a href="/chats/${userAtual_id}/${user_id}" class="chat-message">Enviar Mensagem</a></td>
                                     `;
                                     const tableBody = document.getElementById('travel-table-body');
-                                    tableBody.innerHTML = ''; // Limpar a tabela antes de popular
+                                    tableBody.innerHTML = '';
                                     if (tableBody) {
                                         tableBody.appendChild(row);  // Adiciona a linha à tabela
                                     } else {
                                         console.error('Elemento com id "travel-table-body" não encontrado.');
+                                    }
+
+                                    if (user_id === parseInt(userAtual_id)) {
+                                        const rateButton = row.querySelector('.button-details');
+                                        const chatButton = row.querySelector('.chat-message');
+                                        
+                                        rateButton.classList.add('disabled');
+                                        rateButton.style.pointerEvents = 'none';
+                                        
+                                        chatButton.classList.add('disabled');
+                                        chatButton.style.pointerEvents = 'none';
+                                    }
+                                    // Se a viagem não ocorreu, desativar o botão de avaliação
+                                    if (!isPastTravel) {
+                                        const rateButton = row.querySelector('.button-details');
+                                        rateButton.classList.add('disabled');
+                                        rateButton.style.pointerEvents = 'none';  
                                     }
                                 } else {
                                     throw new Error('Detalhes do carro não encontrados.');

@@ -11,6 +11,7 @@ from zupit.service.rate_crud import (
     create_rating_db,
     get_rates_by_user,
     get_rating_db,
+    check_rating_db,
 )
 from zupit.utils import get_current_user
 
@@ -41,7 +42,6 @@ def create_rating(
             url='/profile/my-travels', status_code=HTTPStatus.SEE_OTHER
         )
 
-
 @router.get('/{recipient_id}', response_model=RateList)
 def get_rating_user(
     recipient_id: int, session: Session = Depends(get_session)
@@ -56,6 +56,18 @@ def get_rating(rate_id: int, session: Session = Depends(get_session)):
     db_rate = get_rating_db(rate_id, session)
     if db_rate:
         return db_rate
+    return None
+
+@router.get('/edit/{recipient_id}/{author_id}/{rate_type}', response_model=RatePublic)
+def get_existing_rating(
+    recipient_id: int,
+    author_id: int,
+    rate_type: str,
+    session: Session = Depends(get_session)
+):
+    rating = check_rating_db(recipient_id=recipient_id, author_id=author_id, rate_type=rate_type, session=session)
+    if rating:
+        return rating
     return None
 
 
