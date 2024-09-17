@@ -81,6 +81,7 @@ def get_rates_by_user(
 
     return RateList(rates=list_rate)
 
+
 def check_rating_db(
     recipient_id: int, author_id: int, rate_type: str, session: Session
 ) -> Optional[Rate]:
@@ -90,7 +91,7 @@ def check_rating_db(
         FROM check_rating_exists(:author_id, :recipient_id, :rate_type);
         """
     )
-    
+
     try:
         rate_db = session.execute(
             sql,
@@ -101,7 +102,7 @@ def check_rating_db(
             },
         ).fetchone()
         session.commit()
-        
+
         if rate_db:
             return Rate(
                 id=rate_db[0],
@@ -116,5 +117,5 @@ def check_rating_db(
 
     except Exception as e:
         session.rollback()
-        print(f"Erro ao verificar a avaliação no banco de dados: {e}")
+        print(f'Erro ao verificar a avaliação no banco de dados: {e}')
         return None
