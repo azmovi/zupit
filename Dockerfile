@@ -1,13 +1,16 @@
-FROM python:3.12-slim
-ENV POETRY_VIRTUALENVS_CREATE=false
+FROM python:3.12
 
-WORKDIR app/
-COPY . .
+WORKDIR /code
 
-RUN pip install poetry
+COPY pyproject.toml uv.lock README.md /code/
+COPY zupit/ /code/zupit/
 
-RUN poetry config installer.max-workers 10
-RUN poetry install --no-interaction --no-ansi
 
-EXPOSE 8000
-CMD [ "poetry", "run", "uvicorn", "--host", "0.0.0.0", "zupit.app:app" ]
+
+RUN pip install --upgrade pip
+RUN pip install .
+
+COPY ./zupit/ /code/
+
+
+CMD ["fastapi", "dev", "app.py"]

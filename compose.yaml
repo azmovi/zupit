@@ -1,8 +1,13 @@
 services:
+  otel:
+    image: grafana/otel-lgtm
+    ports:
+    - 3000:3000 # grafana
+    - 4317:4317 # otel
+
   zupit_database:
     image: postgres
     volumes:
-      # - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./populate.sql:/docker-entrypoint-initdb.d/populate.sql
     environment:
@@ -12,10 +17,11 @@ services:
 
     ports:
       - "5432:5432"
+    depends_on:
+      - otel
 
   zupit_app:
     image: zupit_app 
-    entrypoint: ./entrypoint.sh
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,6 +29,7 @@ services:
       - "8000:8000"
     depends_on:
       - zupit_database
+      - otel
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@zupit_database:5432/zupit_db
     volumes:

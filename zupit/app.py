@@ -1,3 +1,5 @@
+import logging 
+from contextlib import asynccontextmanager
 from http import HTTPStatus
 from typing import Annotated
 
@@ -7,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
+from opentelemetry import trace
 
 from .database import get_session
 from .router import (
@@ -22,7 +25,19 @@ from .router import (
 )
 from .utils import get_current_driver, get_current_user
 
-app = FastAPI()
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
+tracer = trace.get_tracer(__name__)
+
+@asynccontextmanager
+async def lifespan(app):
+
+    logger.info('Iniciando App')
+    yield
+    logger.info('Finalizando App')
+
+app = FastAPI(lifespan=lifespan)
 
 app.mount('/static', StaticFiles(directory='zupit/static'), name='static')
 templates = Jinja2Templates(directory='zupit/templates')
@@ -39,6 +54,11 @@ app.include_router(chats.router)
 app.include_router(messages.router)
 
 Session = Annotated[Session, Depends(get_session)]
+
+@app.get("/hello")
+def hello():
+    with tracer.start_as_current_span("hello-span"):
+        return {"message": "hello"}
 
 
 @app.get('/', response_class=HTMLResponse)
