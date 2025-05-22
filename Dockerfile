@@ -9,8 +9,9 @@ COPY zupit/ /code/zupit/
 
 RUN pip install --upgrade pip
 RUN pip install .
+RUN opentelemetry-bootstrap -a install
 
 COPY ./zupit/ /code/
 
 
-CMD ["fastapi", "dev", "app.py"]
+CMD ["opentelemetry-instrument", "fastapi", "dev", "--host", "0.0.0.0", "zupit/app.py"]
